@@ -85,6 +85,25 @@
   background-size: 22px 22px;
 }
 
+/* iPhone: nodes are 440px; let the canvas pan instead of clipping them.
+   Desktop layout/spacing is unchanged — this only applies below md. */
+@media (max-width: 767px) {
+  html,
+  body {
+    overflow-x: visible;
+  }
+
+  .canvas-dots {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+
+  .canvas-flow {
+    min-width: max-content;
+  }
+}
+
 @keyframes popover-in {
   from {
     opacity: 0;

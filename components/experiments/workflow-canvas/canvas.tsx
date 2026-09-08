@@ -448,7 +448,7 @@ export function WorkflowCanvas({
           onStop={stopRun}
         />
         <div
-          className="canvas-dots relative min-h-0 flex-1 overflow-auto"
+          className="canvas-dots relative min-h-0 flex-1 overflow-x-auto overflow-y-auto"
           onClick={(event) => {
             if (editingLocked) {
               return;
@@ -461,7 +461,7 @@ export function WorkflowCanvas({
           <div
             role="listbox"
             aria-label="Workflow steps"
-            className="mx-auto flex min-h-full w-full max-w-3xl flex-col items-center px-4 pt-6 pb-10"
+            className="canvas-flow mx-auto flex min-h-full w-full max-w-3xl flex-col items-center px-4 pt-6 pb-10"
             onClick={(event) => {
               if (editingLocked) {
                 return;
