@@ -9,7 +9,7 @@ export default function Home() {
         className="text-[11px] font-medium tracking-[0.04em] uppercase"
         style={{ color: color.faint }}
       >
-        Agentic UX Lab
+        Design experiment
       </p>
       <h1
         className="mt-2 text-[15px] font-semibold leading-tight"
