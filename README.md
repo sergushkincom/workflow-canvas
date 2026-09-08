@@ -3,7 +3,7 @@
 **The question:** what does an interface look like when a system is honest about
 not knowing, and hands the decision back to a person?
 
-[Live demo →](https://workflow-canvas-sandy.vercel.app/experiments/workflow-canvas)
+[Live demo →](https://denys-workflow-canvas.vercel.app/experiments/workflow-canvas)
 
 ## What it is
 
