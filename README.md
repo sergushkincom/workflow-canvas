@@ -5,6 +5,14 @@ not knowing, and hands the decision back to a person?
 
 [Live demo →](https://denys-workflow-canvas.vercel.app/experiments/workflow-canvas)
 
+![The canvas: a trigger and a condition step, with an incomplete marker in the node footer](./preview-build.png)
+
+*Build — conditions you can add, reorder and delete. Nothing is styled as an error until you try to run it.*
+
+![The AI step stopped at 62% confidence, stating why and offering two classifications](./preview-run.png)
+
+*Run — the AI step reaches 62%, says what it is unsure about, and waits.*
+
 ## What it is
 
 A support-triage workflow builder with two halves.
