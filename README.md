@@ -94,6 +94,18 @@ six months later.
 My prediction: teams set it once and never revisit it, which means the interface has to
 surface the drift on its own.
 
+## What the comments changed
+
+I posted this on LinkedIn and people pushed on it. Two changes so far.
+
+**The wait goes still.** Someone asked whether "waiting for you" still reads that way after five minutes, or starts to feel broken. I had never let it run past one. My guess was that motion has a shelf life, so now, after a minute, the pulse stops and the step says *Waiting since 14:02* instead. Stillness reads as patience. Movement reads as stuck.
+
+Building it turned up a second moving thing I hadn't counted: the step's timer, ticking every tenth of a second. That had to stop too. So the only looping animation in the prototype now has an end as well.
+
+**Mobile.** On an iPhone you couldn't reach the right edge of a node. The canvas pans on narrow screens now. It's a bandaid — the canvas was never designed for a phone, and a real fix isn't part of the question this prototype asks.
+
+**Next.** One blocked flow waiting for a person is honest. Forty of them is a queue nobody looks at. That's the next experiment.
+
 ## Running it
 
 ```bash
@@ -101,6 +113,8 @@ npm install
 npm run dev
 # → http://localhost:3000/experiments/workflow-canvas
 ```
+
+Add `?still=5` to the URL to make the waiting state go still after 5 seconds instead of 60 — handy for recording.
 
 Built in my own time. Fake data throughout, no production code and nothing proprietary
 — just enough to feel the interaction.

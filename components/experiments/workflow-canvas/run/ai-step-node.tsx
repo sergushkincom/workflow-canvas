@@ -8,9 +8,11 @@ import { NodeShell } from "../node-shell";
 import { RunNodeFooter } from "./run-node-footer";
 import {
   CLASSIFY_STEP_ID,
+  formatClockTime,
   type NodeRunState,
 } from "@/lib/experiments/workflow-canvas/run-machine";
 import { classifyStreamDurationMs } from "@/lib/experiments/workflow-canvas/run-machine";
+import { STILL_AFTER_MS } from "@/lib/experiments/workflow-canvas/run-timings";
 import {
   accent,
   color,
@@ -29,6 +31,26 @@ type AiStepNodeProps = {
   onEscalate: (elapsedMs: number) => void;
 };
 
+type StillWait = {
+  runStartedAt: number;
+  since: number;
+};
+
+function stillAfterMs(): number {
+  if (typeof window === "undefined") {
+    return STILL_AFTER_MS;
+  }
+  const raw = new URLSearchParams(window.location.search).get("still");
+  if (raw == null) {
+    return STILL_AFTER_MS;
+  }
+  const seconds = Number(raw);
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return STILL_AFTER_MS;
+  }
+  return seconds * 1000;
+}
+
 export function AiStepNode({
   state,
   streamedText,
@@ -41,9 +63,22 @@ export function AiStepNode({
   const awaiting = state === "awaiting";
   const running = state === "running";
   const dimmed = state === "skipped";
-  const ticking = running || awaiting;
+  const [stillWait, setStillWait] = useState<StillWait | null>(null);
+  const still = awaiting && stillWait?.runStartedAt === startedAt;
+  const ticking = running || (awaiting && !still);
   const liveRef = useRef(0);
   const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!awaiting || startedAt == null) {
+      return;
+    }
+    const waitStart = Date.now();
+    const id = window.setTimeout(() => {
+      setStillWait({ runStartedAt: startedAt, since: waitStart });
+    }, stillAfterMs());
+    return () => window.clearTimeout(id);
+  }, [awaiting, startedAt]);
 
   useEffect(() => {
     if (!ticking || startedAt == null) {
@@ -57,6 +92,8 @@ export function AiStepNode({
   }, [ticking, startedAt]);
 
   const tint = typeTint.aiStep;
+  const decisionElapsed = () =>
+    startedAt != null ? Date.now() - startedAt : liveRef.current;
 
   return (
     <div
@@ -102,9 +139,15 @@ export function AiStepNode({
           </h2>
           {awaiting ? (
             <span
-              className="animate-await-pulse ml-auto size-[6px] rounded-full"
+              className={`ml-auto size-[6px] rounded-full transition-opacity duration-700 ${
+                still ? "opacity-100" : "animate-await-pulse"
+              }`}
               style={{ background: accent }}
-              aria-label="Awaiting decision"
+              aria-label={
+                still && stillWait
+                  ? `Waiting for your decision since ${formatClockTime(stillWait.since)}`
+                  : "Awaiting decision"
+              }
             />
           ) : null}
         </div>
@@ -133,16 +176,10 @@ export function AiStepNode({
         {awaiting ? (
           <DecisionPanel
             onConfirm={(label) => {
-              const ms =
-                liveRef.current ||
-                (startedAt != null ? Date.now() - startedAt : 0);
-              onConfirm(label, ms);
+              onConfirm(label, decisionElapsed());
             }}
             onEscalate={() => {
-              const ms =
-                liveRef.current ||
-                (startedAt != null ? Date.now() - startedAt : 0);
-              onEscalate(ms);
+              onEscalate(decisionElapsed());
             }}
           />
         ) : null}
@@ -152,6 +189,7 @@ export function AiStepNode({
           elapsedMs={elapsedMs}
           ticking={ticking}
           startedAt={startedAt}
+          waitingSince={still && stillWait ? stillWait.since : null}
         />
       </NodeShell>
       <span className="sr-only" data-step-id={CLASSIFY_STEP_ID} />

@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import { formatElapsed } from "@/lib/experiments/workflow-canvas/run-machine";
+import {
+  formatClockTime,
+  formatElapsed,
+} from "@/lib/experiments/workflow-canvas/run-machine";
 import { color } from "@/lib/experiments/workflow-canvas/tokens";
 
 type RunNodeFooterProps = {
@@ -12,6 +15,7 @@ type RunNodeFooterProps = {
   /** Keep a live clock while running or awaiting */
   ticking?: boolean;
   startedAt?: number | null;
+  waitingSince?: number | null;
 };
 
 export function RunNodeFooter({
@@ -19,6 +23,7 @@ export function RunNodeFooter({
   elapsedMs,
   ticking = false,
   startedAt = null,
+  waitingSince = null,
 }: RunNodeFooterProps) {
   const [liveMs, setLiveMs] = useState(0);
 
@@ -32,8 +37,10 @@ export function RunNodeFooter({
     return () => window.clearInterval(id);
   }, [ticking, startedAt]);
 
-  const showElapsed = ticking || elapsedMs !== undefined;
-  if (!output && !showElapsed) {
+  const showWaitingSince = waitingSince != null;
+  const showElapsed =
+    !showWaitingSince && (ticking || elapsedMs !== undefined);
+  if (!output && !showElapsed && !showWaitingSince) {
     return null;
   }
 
@@ -58,7 +65,14 @@ export function RunNodeFooter({
       ) : (
         <span />
       )}
-      {showElapsed ? (
+      {showWaitingSince ? (
+        <p
+          className="shrink-0 text-[11px] tabular-nums"
+          style={{ color: color.faint }}
+        >
+          Waiting since {formatClockTime(waitingSince)}
+        </p>
+      ) : showElapsed ? (
         <p
           className="shrink-0 text-[11px] tabular-nums"
           style={{ color: color.faint }}

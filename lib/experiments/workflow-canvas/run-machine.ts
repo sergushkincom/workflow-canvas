@@ -228,7 +228,20 @@ export function runReducer(state: Run, action: RunAction): Run {
 }
 
 export function formatElapsed(ms: number): string {
-  return `${(ms / 1000).toFixed(1)}s`;
+  if (ms < 60_000) {
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${seconds}s`;
+}
+
+export function formatClockTime(ts: number): string {
+  const date = new Date(ts);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
 export function idsBelow(orderedIds: string[], id: string): string[] {
