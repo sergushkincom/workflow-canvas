@@ -50,6 +50,7 @@ export type FlowAction =
       rowId: string;
       patch: Partial<Omit<ConditionRow, "id">>;
     }
+  | { type: "appendRows"; nodeId: string; rows: ConditionRow[] }
   | { type: "resizeNode"; id: string; width: number }
   | { type: "showTriggerHint" }
   | { type: "clearTriggerHint" };

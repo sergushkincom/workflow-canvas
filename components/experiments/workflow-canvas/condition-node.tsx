@@ -1,13 +1,20 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Filter } from "lucide-react";
+import { Filter, Sparkles } from "lucide-react";
 
+import { ConditionAssistantPanel } from "./condition-assistant";
 import { ConditionRowItem } from "./condition-row";
 import { useChipMenu } from "./field-select";
 import { NodeShell } from "./node-shell";
 import { RunNodeFooter } from "./run/run-node-footer";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { FlowAction } from "@/lib/experiments/workflow-canvas/types";
 import {
@@ -36,6 +43,13 @@ type ConditionNodeCardProps = {
   elapsedMs?: number;
   startedAt?: number | null;
   runDurationMs?: number;
+  assistantEnabled?: boolean;
+  assistantOpen?: boolean;
+  assistantMinimized?: boolean;
+  assistantNarrow?: boolean;
+  onAssistantOpen?: () => void;
+  onAssistantClose?: () => void;
+  onAssistantMinimize?: () => void;
 };
 
 export function ConditionNodeCard({
@@ -52,23 +66,40 @@ export function ConditionNodeCard({
   elapsedMs,
   startedAt = null,
   runDurationMs,
+  assistantEnabled = false,
+  assistantOpen = false,
+  assistantMinimized = false,
+  assistantNarrow = false,
+  onAssistantOpen,
+  onAssistantClose,
+  onAssistantMinimize,
 }: ConditionNodeCardProps) {
   const incomplete = isNodeIncomplete(node) && !runState;
   const menu = useChipMenu();
   const skipped = runState === "skipped";
   const tint = typeTint.condition;
   const ticking = runState === "running";
+  const sparklesRef = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
+
+  useEffect(() => {
+    if (wasOpen.current && !assistantOpen) {
+      sparklesRef.current?.focus();
+    }
+    wasOpen.current = assistantOpen;
+  }, [assistantOpen]);
 
   return (
     <div
       className={cn(
-        "flex w-full flex-col items-center",
+        "relative flex w-full flex-col items-center",
         entering && "animate-node-in",
         exiting && "animate-node-out",
         skipped && "opacity-60",
       )}
     >
-      <NodeShell
+      <div className="relative" style={{ width: node.width }}>
+        <NodeShell
         chip="If / Else"
         tintKey="condition"
         selected={selected}
@@ -107,6 +138,39 @@ export function ConditionNodeCard({
           >
             Condition
           </h2>
+          {assistantEnabled && assistantOpen && assistantMinimized ? (
+            <button
+              type="button"
+              className="ml-auto inline-flex h-6 items-center rounded-[6px] px-2 text-[11.5px] font-medium"
+              style={{ background: color.field, color: color.muted }}
+              onClick={(event) => {
+                event.stopPropagation();
+                onAssistantOpen?.();
+              }}
+            >
+              Assistant
+            </button>
+          ) : assistantEnabled ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  ref={sparklesRef}
+                  type="button"
+                  aria-label="Ask the condition assistant"
+                  className="ml-auto flex size-6 shrink-0 items-center justify-center rounded-[6px]"
+                  style={{ color: color.muted }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSelect();
+                    onAssistantOpen?.();
+                  }}
+                >
+                  <Sparkles size={14} strokeWidth={1.75} aria-hidden />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ask the condition assistant</TooltipContent>
+            </Tooltip>
+          ) : null}
         </div>
 
         <div
@@ -180,6 +244,17 @@ export function ConditionNodeCard({
           </p>
         ) : null}
       </NodeShell>
+        {assistantEnabled && assistantOpen ? (
+          <ConditionAssistantPanel
+            node={node}
+            minimized={assistantMinimized}
+            narrow={assistantNarrow}
+            dispatch={dispatch}
+            onClose={() => onAssistantClose?.()}
+            onMinimize={() => onAssistantMinimize?.()}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }

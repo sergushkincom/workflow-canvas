@@ -264,6 +264,9 @@ export function WorkflowCanvas({
   const [startedAt, setStartedAt] = useState<Record<string, number>>({});
   const startedAtRef = useRef<Record<string, number>>({});
   const resultRef = useRef<HTMLDivElement | null>(null);
+  const [assistantId, setAssistantId] = useState<string | null>(null);
+  const [assistantMinimized, setAssistantMinimized] = useState(false);
+  const [assistantNarrow, setAssistantNarrow] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -274,6 +277,7 @@ export function WorkflowCanvas({
     run.phase === "running" || run.phase === "awaiting-decision";
   const hideEditChrome = editingLocked;
   const canAddSteps = !editingLocked;
+  const assistantEnabled = run.phase === "idle";
 
   useEffect(() => {
     if (!captureState) {
@@ -306,6 +310,16 @@ export function WorkflowCanvas({
       setStartedAt({});
     }
   }, [run.phase]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 899px)");
+    function sync() {
+      setAssistantNarrow(media.matches);
+    }
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   // After Confirm / Escalate, reveal the result card and scroll it into view.
   useEffect(() => {
@@ -353,6 +367,9 @@ export function WorkflowCanvas({
       if (run.phase === "done") {
         stopRun();
       }
+      if (assistantId === id) {
+        closeAssistant();
+      }
       setExitingId(id);
       window.setTimeout(() => {
         dispatch({ type: "deleteNode", id });
@@ -362,7 +379,12 @@ export function WorkflowCanvas({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [state.selectedId, exitingId, editingLocked, run.phase]);
+  }, [state.selectedId, exitingId, editingLocked, run.phase, assistantId]);
+
+  function closeAssistant() {
+    setAssistantId(null);
+    setAssistantMinimized(false);
+  }
 
   function stopRun() {
     dispatchRun({ type: "stop" });
@@ -441,6 +463,7 @@ export function WorkflowCanvas({
             if (incomplete > 0) {
               return;
             }
+            closeAssistant();
             setStartedAt({});
             startedAtRef.current = {};
             dispatchRun({ type: "start", flow: state.flow });
@@ -524,6 +547,24 @@ export function WorkflowCanvas({
                         elapsedMs={run.elapsed[node.id]}
                         startedAt={startedAt[node.id] ?? null}
                         runDurationMs={CONDITION_MS}
+                        assistantEnabled={assistantEnabled}
+                        assistantOpen={assistantId === node.id}
+                        assistantMinimized={
+                          assistantId === node.id && assistantMinimized
+                        }
+                        assistantNarrow={assistantNarrow}
+                        onAssistantOpen={() => {
+                          setAssistantId(node.id);
+                          setAssistantMinimized(false);
+                        }}
+                        onAssistantClose={() => {
+                          setAssistantId(null);
+                          setAssistantMinimized(false);
+                        }}
+                        onAssistantMinimize={() => {
+                          setAssistantId(node.id);
+                          setAssistantMinimized(true);
+                        }}
                       />
                     </SortableContext>
                   </DndContext>

@@ -1,3 +1,4 @@
+import { rowSignature } from "./assistant";
 import { SEED_CONDITION, TRIGGER } from "./data";
 import type {
   ConditionNode,
@@ -160,6 +161,17 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
           return next;
         }),
       }));
+    case "appendRows":
+      return mapNode(state, action.nodeId, (node) => {
+        const existing = new Set(node.rows.map(rowSignature));
+        const extra = action.rows.filter(
+          (row) => !existing.has(rowSignature(row)),
+        );
+        if (extra.length === 0) {
+          return node;
+        }
+        return { ...node, rows: [...node.rows, ...extra] };
+      });
     case "resizeNode": {
       const width = clampNodeWidth(action.width);
       if (action.id === "trigger") {
