@@ -19,7 +19,8 @@ A support-triage workflow builder with two halves.
 
 **Build.** A trigger and condition steps on a dotted canvas. Add, edit, reorder and
 delete conditions. Each step reports whether it is complete, and the flow cannot run
-until every step is.
+until every step is. A ✦ button on each condition opens an assistant that helps you
+write it — more on that below.
 
 **Run.** A Test run mode that executes the flow against one sample ticket in real
 elapsed time. Conditions evaluate. An AI step reads the ticket and streams its
@@ -93,6 +94,33 @@ six months later.
 
 My prediction: teams set it once and never revisit it, which means the interface has to
 surface the drift on its own.
+
+## The assistant — honest at build time too
+
+The AI step is honest at run time. The same question applies earlier: when an
+assistant helps you *build* the flow, does it guess, or does it ask?
+
+Click ✦ on a condition step. The assistant:
+
+- **Reads the condition back in plain words** — *"Runs when the ticket channel is
+  Email and the customer's lifetime value is greater than 5,000"* — and says whether
+  the sample ticket would pass.
+- **Asks instead of guessing.** "Only VIP customers" could mean lifetime value or plan.
+  It says it can't tell which one you mean, and asks.
+- **Shows consequences before anything changes.** Suggestions appear as drafts and are
+  never applied silently. Pick "Plan is Enterprise" and it warns you the sample ticket
+  won't pass anymore.
+- **Says when it can't help.** Ask for something it has no field for, and it lists the
+  fields it knows instead of inventing one.
+- **Leaves the authorship with you.** When you add a suggestion, it says *Added by
+  you* — not "I added".
+
+It sits next to the step it's about and moves with it, rather than living in a side
+panel. On a canvas, position carries meaning: a floating window covers the work and
+fights the pan.
+
+The assistant is scripted — a keyword matcher, not a model. The point is the
+behaviour, not the language understanding.
 
 ## What the comments changed
 
