@@ -100,6 +100,10 @@ surface the drift on its own.
 The AI step is honest at run time. The same question applies earlier: when an
 assistant helps you *build* the flow, does it guess, or does it ask?
 
+![The condition assistant beside a condition step: a plain-language read-back, a suggested row shown as a dashed draft, and what it would do to the sample ticket](./preview-assistant.png)
+
+*Build — the assistant reads the condition back in plain words and shows a suggestion as a draft, with its effect on the sample ticket, before anything changes.*
+
 Click ✦ on a condition step. The assistant:
 
 - **Reads the condition back in plain words** — *"Runs when the ticket channel is
