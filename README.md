@@ -75,7 +75,8 @@ outcome teaches people that asking was theatre.
 The waiting state turned out to be the only looping animation in the whole prototype.
 Everything else has a start and an end. The one state with no deadline is the only one
 that never stops moving. I didn't plan that — a static comp could not have shown it to
-me.
+me. That stayed true until someone asked what happens after five minutes —
+see "What the comments changed" below.
 
 ## Deliberately not built
 
