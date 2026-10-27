@@ -22,9 +22,20 @@ export type ConditionNode = {
   width: number;
 };
 
+export type ActionNode = {
+  id: string;
+  kind: "action";
+  nodeTypeId: string;
+  title: string;
+  subtitle: string;
+  width: number;
+};
+
+export type StepNode = ConditionNode | ActionNode;
+
 export type Flow = {
   trigger: TriggerNode;
-  steps: ConditionNode[];
+  steps: StepNode[];
 };
 
 export type SelectedId = "trigger" | string | null;
@@ -52,8 +63,17 @@ export type FlowAction =
     }
   | { type: "appendRows"; nodeId: string; rows: ConditionRow[] }
   | { type: "resizeNode"; id: string; width: number }
+  | { type: "insertNode"; id: string; nodeTypeId: string; index: number }
   | { type: "showTriggerHint" }
   | { type: "clearTriggerHint" };
+
+export function isConditionNode(node: StepNode): node is ConditionNode {
+  return !("kind" in node);
+}
+
+export function isActionNode(node: StepNode): node is ActionNode {
+  return "kind" in node && node.kind === "action";
+}
 
 export const TRIGGER_DEFAULT_WIDTH = 440;
 export const CONDITION_DEFAULT_WIDTH = 440;
@@ -74,7 +94,10 @@ export function isRowComplete(row: ConditionRow): boolean {
   return Boolean(row.value);
 }
 
-export function isNodeIncomplete(node: ConditionNode): boolean {
+export function isNodeIncomplete(node: StepNode): boolean {
+  if (isActionNode(node)) {
+    return true;
+  }
   return node.rows.some((row) => !isRowComplete(row));
 }
 

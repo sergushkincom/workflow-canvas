@@ -1,14 +1,6 @@
 // Type tints say what a step is. The accent says what the system is doing.
 // These two sets never borrow from each other.
 
-export const typeTint = {
-  trigger: { tint: "#F4F1FE", ink: "#7C5CE0" },
-  condition: { tint: "#FDF3E3", ink: "#C98A2E" },
-  aiStep: { tint: "#EDF3FB", ink: "#3B72B8" },
-} as const;
-
-export type TypeTintKey = keyof typeof typeTint;
-
 /** State accent — selection, focus, running underline, confidence, pulse, primary CTA */
 export const accent = "#0B7285";
 
@@ -26,6 +18,15 @@ export const color = {
   dashed: "#D6D3D1",
   field: "#F5F5F4",
 } as const;
+
+export const typeTint = {
+  trigger: { tint: "#F4F1FE", ink: "#7C5CE0" },
+  condition: { tint: "#FDF3E3", ink: "#C98A2E" },
+  aiStep: { tint: "#EDF3FB", ink: "#3B72B8" },
+  neutral: { tint: color.field, ink: color.muted },
+} as const;
+
+export type TypeTintKey = keyof typeof typeTint;
 
 export const NODE_WIDTH = 440;
 

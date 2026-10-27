@@ -2,7 +2,12 @@
 
 import {
   DndContext,
+  DragOverlay,
+  type Announcements,
+  type CollisionDetection,
   type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
   PointerSensor,
   closestCenter,
   useSensor,
@@ -22,8 +27,10 @@ import {
   type SetStateAction,
 } from "react";
 
+import { ActionNodeCard } from "./action-node";
 import { ConditionNodeCard } from "./condition-node";
 import { Connector } from "./connector";
+import { NodePalette, PaletteCardPreview } from "./node-palette";
 import { AiStepNode } from "./run/ai-step-node";
 import type { DecisionLabel } from "./run/decision-panel";
 import { ResultCard } from "./run/result-card";
@@ -36,6 +43,10 @@ import {
   CLASSIFY_STEP_ID,
   SEED_CONDITION,
 } from "@/lib/experiments/workflow-canvas/data";
+import {
+  getNodeType,
+  nodeTypeIsTrigger,
+} from "@/lib/experiments/workflow-canvas/node-types";
 import {
   flowReducer,
   initialFlowState,
@@ -66,6 +77,7 @@ import {
 import type { Flow, FlowAction } from "@/lib/experiments/workflow-canvas/types";
 import {
   incompleteStepCount,
+  isConditionNode,
   stepCount,
 } from "@/lib/experiments/workflow-canvas/types";
 
@@ -84,6 +96,101 @@ function isTypingTarget(target: EventTarget | null): boolean {
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
+
+function readPaletteNodeTypeId(
+  data: { current?: { nodeTypeId?: unknown } } | null | undefined,
+): string | null {
+  const value = data?.current?.nodeTypeId;
+  return typeof value === "string" ? value : null;
+}
+
+const paletteCollisionDetection: CollisionDetection = (args) => {
+  const nodeTypeId = readPaletteNodeTypeId(args.active.data);
+  if (!nodeTypeId || nodeTypeIsTrigger(nodeTypeId)) {
+    return [];
+  }
+  const pointer = args.pointerCoordinates;
+  if (!pointer || typeof document === "undefined") {
+    return [];
+  }
+  const canvas = document.querySelector("[data-workflow-canvas]");
+  if (!(canvas instanceof HTMLElement)) {
+    return [];
+  }
+  const bounds = canvas.getBoundingClientRect();
+  const overCanvas =
+    pointer.x >= bounds.left &&
+    pointer.x <= bounds.right &&
+    pointer.y >= bounds.top &&
+    pointer.y <= bounds.bottom;
+  if (!overCanvas) {
+    return [];
+  }
+
+  let nearestId: (typeof args.droppableContainers)[number]["id"] | null = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (const container of args.droppableContainers) {
+    if (container.disabled) {
+      continue;
+    }
+    if (typeof container.data.current?.insertIndex !== "number") {
+      continue;
+    }
+    const rect = args.droppableRects.get(container.id);
+    if (!rect) {
+      continue;
+    }
+    const distance = Math.abs(rect.top + rect.height / 2 - pointer.y);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestId = container.id;
+    }
+  }
+  return nearestId == null ? [] : [{ id: nearestId }];
+}
+
+function paletteTitle(data: { current?: { nodeTypeId?: unknown } } | null | undefined) {
+  const nodeTypeId = readPaletteNodeTypeId(data);
+  return nodeTypeId ? getNodeType(nodeTypeId)?.title : undefined;
+}
+
+const paletteAnnouncements: Announcements = {
+  onDragStart({ active }) {
+    const nodeTypeId = readPaletteNodeTypeId(active.data);
+    if (nodeTypeId && nodeTypeIsTrigger(nodeTypeId)) {
+      return "This flow already has a trigger.";
+    }
+    const title = paletteTitle(active.data);
+    return title ? `Picked up ${title}.` : undefined;
+  },
+  onDragOver({ active, over }) {
+    const nodeTypeId = readPaletteNodeTypeId(active.data);
+    if (nodeTypeId && nodeTypeIsTrigger(nodeTypeId)) {
+      return "This flow already has a trigger.";
+    }
+    const title = paletteTitle(active.data);
+    const index = over?.data.current?.insertIndex;
+    if (!title || typeof index !== "number") {
+      return title ? `${title} is not over the flow.` : undefined;
+    }
+    return `${title} will insert at position ${index + 1}.`;
+  },
+  onDragEnd({ active, over }) {
+    const nodeTypeId = readPaletteNodeTypeId(active.data);
+    if (nodeTypeId && nodeTypeIsTrigger(nodeTypeId)) {
+      return "This flow already has a trigger.";
+    }
+    const title = paletteTitle(active.data);
+    if (!title || typeof over?.data.current?.insertIndex !== "number") {
+      return title ? `${title} was not added.` : undefined;
+    }
+    return `${title} added.`;
+  },
+  onDragCancel({ active }) {
+    const title = paletteTitle(active.data);
+    return title ? `Cancelled dragging ${title}.` : "Drag cancelled.";
+  },
+};;
 
 class TimerBag {
   private timeouts = new Set<number>();
@@ -222,8 +329,9 @@ function useRunDriver(
     }
 
     const node = flowRef.current.steps.find((item) => item.id === activeId);
+    const condition = node && isConditionNode(node) ? node : null;
     timers.setTimeout(() => {
-      const passed = node ? evaluateConditionNode(node) : false;
+      const passed = condition ? evaluateConditionNode(condition) : false;
       if (passed) {
         dispatchRun({
           type: "finishNode",
@@ -271,6 +379,9 @@ export function WorkflowCanvas({
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
+  const [notice, setNotice] = useState<string | null>(null);
+  const [dragTypeId, setDragTypeId] = useState<string | null>(null);
+  const [overDropId, setOverDropId] = useState<string | null>(null);
 
   const incomplete = incompleteStepCount(state.flow);
   const editingLocked =
@@ -352,6 +463,12 @@ export function WorkflowCanvas({
       if (isTypingTarget(event.target)) {
         return;
       }
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.closest("[data-node-palette]")
+      ) {
+        return;
+      }
       if (!state.selectedId) {
         return;
       }
@@ -425,6 +542,55 @@ export function WorkflowCanvas({
     setEnteringId(id);
   }
 
+  function insertNodeAt(nodeTypeId: string, index: number) {
+    if (nodeTypeIsTrigger(nodeTypeId) && state.flow.trigger) {
+      setNotice("This flow already has a trigger.");
+      return;
+    }
+    if (editingLocked || !getNodeType(nodeTypeId)) {
+      return;
+    }
+    setNotice(null);
+    const id = crypto.randomUUID();
+    safeEdit({ type: "insertNode", id, nodeTypeId, index });
+    setEnteringId(id);
+  }
+
+  function clearPaletteDrag() {
+    setDragTypeId(null);
+    setOverDropId(null);
+  }
+
+  function onPaletteDragStart(event: DragStartEvent) {
+    const nodeTypeId = readPaletteNodeTypeId(event.active.data);
+    setDragTypeId(nodeTypeId);
+    if (nodeTypeId && nodeTypeIsTrigger(nodeTypeId) && state.flow.trigger) {
+      setNotice("This flow already has a trigger.");
+      return;
+    }
+    setNotice(null);
+  }
+
+  function onPaletteDragOver(event: DragOverEvent) {
+    const index = event.over?.data.current?.insertIndex;
+    setOverDropId(
+      typeof index === "number" && event.over ? String(event.over.id) : null,
+    );
+  }
+
+  function onPaletteDragEnd(event: DragEndEvent) {
+    const nodeTypeId = readPaletteNodeTypeId(event.active.data);
+    const index = event.over?.data.current?.insertIndex;
+    clearPaletteDrag();
+    if (!nodeTypeId || typeof index !== "number") {
+      if (nodeTypeId && nodeTypeIsTrigger(nodeTypeId) && state.flow.trigger) {
+        setNotice("This flow already has a trigger.");
+      }
+      return;
+    }
+    insertNodeAt(nodeTypeId, index);
+  }
+
   function onDragEnd(event: DragEndEvent, nodeId: string) {
     if (editingLocked) {
       return;
@@ -450,10 +616,35 @@ export function WorkflowCanvas({
     classifyState !== undefined &&
     classifyState !== "pending" &&
     classifyState !== "skipped";
+  const dragPreview = dragTypeId ? getNodeType(dragTypeId) : undefined;
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex h-dvh flex-col bg-page">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={paletteCollisionDetection}
+        autoScroll={false}
+        accessibility={{
+          announcements: paletteAnnouncements,
+          screenReaderInstructions: {
+            draggable:
+              "Press enter on the card to add it at the end of the flow. Drag the handle onto the canvas to choose a position.",
+          },
+        }}
+        onDragStart={onPaletteDragStart}
+        onDragOver={onPaletteDragOver}
+        onDragEnd={onPaletteDragEnd}
+        onDragCancel={clearPaletteDrag}
+      >
+      <div className="flex h-dvh bg-page">
+        <NodePalette
+          notice={notice}
+          locked={editingLocked}
+          onAppend={(nodeTypeId) =>
+            insertNodeAt(nodeTypeId, state.flow.steps.length)
+          }
+        />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <TopBar
           stepCount={stepCount(state.flow)}
           incompleteCount={incomplete}
@@ -471,7 +662,8 @@ export function WorkflowCanvas({
           onStop={stopRun}
         />
         <div
-          className="canvas-dots relative min-h-0 flex-1 overflow-x-auto overflow-y-auto"
+          data-workflow-canvas=""
+          className="canvas-dots relative min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-auto"
           onClick={(event) => {
             if (editingLocked) {
               return;
@@ -479,8 +671,16 @@ export function WorkflowCanvas({
             if (event.target === event.currentTarget) {
               safeEdit({ type: "select", id: null });
             }
-          }}
+          }          }
         >
+          {notice ? (
+            <p
+              aria-hidden
+              className="pointer-events-none absolute top-4 left-4 z-30 rounded-[6px] bg-surface px-2.5 py-1 text-[13px] leading-tight text-ink-2 shadow-card"
+            >
+              {notice}
+            </p>
+          ) : null}
           <div
             role="listbox"
             aria-label="Workflow steps"
@@ -521,7 +721,12 @@ export function WorkflowCanvas({
                   key={node.id}
                   className="flex w-full flex-col items-center"
                 >
-                  <Connector />
+                  <Connector
+                    dropId={`insert-${index}`}
+                    insertIndex={index}
+                    insertion={overDropId === `insert-${index}`}
+                  />
+                  {isConditionNode(node) ? (
                   <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -568,11 +773,27 @@ export function WorkflowCanvas({
                       />
                     </SortableContext>
                   </DndContext>
+                  ) : (
+                    <ActionNodeCard
+                      node={node}
+                      selected={state.selectedId === node.id}
+                      entering={enteringId === node.id}
+                      exiting={exitingId === node.id}
+                      onSelect={() =>
+                        safeEdit({ type: "select", id: node.id })
+                      }
+                      dispatch={safeEdit}
+                      readOnly={editingLocked}
+                    />
+                  )}
                   {isLast && !showClassify ? (
                     <Connector
                       showAdd
                       hideAdd={!canAddSteps}
                       onAddCondition={addCondition}
+                      dropId="insert-end"
+                      insertIndex={state.flow.steps.length}
+                      insertion={overDropId === "insert-end"}
                     />
                   ) : null}
                 </div>
@@ -584,12 +805,19 @@ export function WorkflowCanvas({
                 showAdd
                 hideAdd={!canAddSteps}
                 onAddCondition={addCondition}
+                dropId="insert-end"
+                insertIndex={0}
+                insertion={overDropId === "insert-end"}
               />
             ) : null}
 
             {showClassify && classifyState ? (
               <>
-                <Connector />
+                <Connector
+                  dropId="insert-before-ai"
+                  insertIndex={state.flow.steps.length}
+                  insertion={overDropId === "insert-before-ai"}
+                />
                 <AiStepNode
                   state={classifyState}
                   streamedText={run.streamedText}
@@ -613,11 +841,22 @@ export function WorkflowCanvas({
             ) : null}
 
             {showClassify && canAddSteps ? (
-              <Connector showAdd onAddCondition={addCondition} />
+              <Connector
+                showAdd
+                onAddCondition={addCondition}
+                dropId="insert-after-ai"
+                insertIndex={state.flow.steps.length}
+                insertion={overDropId === "insert-after-ai"}
+              />
             ) : null}
           </div>
         </div>
+        </div>
       </div>
+      <DragOverlay dropAnimation={null}>
+        {dragPreview ? <PaletteCardPreview nodeType={dragPreview} /> : null}
+      </DragOverlay>
+      </DndContext>
     </TooltipProvider>
   );
 }
