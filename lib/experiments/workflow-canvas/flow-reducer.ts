@@ -1,6 +1,8 @@
 import { rowSignature } from "./assistant";
 import { SEED_CONDITION, TRIGGER } from "./data";
+import { getNodeType } from "./node-types";
 import type {
+  ActionNode,
   ConditionNode,
   ConditionRow,
   FlowAction,
@@ -10,6 +12,7 @@ import {
   CONDITION_DEFAULT_WIDTH,
   TRIGGER_DEFAULT_WIDTH,
   clampNodeWidth,
+  isConditionNode,
 } from "./types";
 
 function emptyRow(id: string): ConditionRow {
@@ -35,7 +38,7 @@ function mapNode(
     flow: {
       ...state.flow,
       steps: state.flow.steps.map((node) =>
-        node.id === nodeId ? updater(node) : node,
+        node.id === nodeId && isConditionNode(node) ? updater(node) : node,
       ),
     },
   };
@@ -186,9 +189,49 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
           },
         };
       }
-      return mapNode(state, action.id, (node) =>
-        node.width === width ? node : { ...node, width },
+      return {
+        ...state,
+        flow: {
+          ...state.flow,
+          steps: state.flow.steps.map((node) =>
+            node.id === action.id && node.width !== width
+              ? { ...node, width }
+              : node,
+          ),
+        },
+      };
+    }
+    case "insertNode": {
+      const definition = getNodeType(action.nodeTypeId);
+      if (!definition || state.flow.steps.some((node) => node.id === action.id)) {
+        return state;
+      }
+      if (definition.group === "Triggers" && state.flow.trigger) {
+        return state;
+      }
+      const node: ActionNode = {
+        id: action.id,
+        kind: "action",
+        nodeTypeId: definition.id,
+        title: definition.title,
+        subtitle: definition.subtitle,
+        width: CONDITION_DEFAULT_WIDTH,
+      };
+      const index = Math.max(
+        0,
+        Math.min(action.index, state.flow.steps.length),
       );
+      const steps = state.flow.steps.slice();
+      steps.splice(index, 0, node);
+      return {
+        ...state,
+        triggerHintVisible: false,
+        selectedId: node.id,
+        flow: {
+          ...state.flow,
+          steps,
+        },
+      };
     }
     case "showTriggerHint":
       return { ...state, triggerHintVisible: true, selectedId: "trigger" };
