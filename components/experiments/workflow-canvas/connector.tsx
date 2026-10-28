@@ -49,9 +49,20 @@ export function Connector({
       {insertion ? (
         <span
           aria-hidden
-          className="pointer-events-none absolute top-1/2 left-1/2 z-20 h-[2px] -translate-x-1/2 -translate-y-1/2"
-          style={{ width: NODE_WIDTH, maxWidth: "100%", background: accent }}
-        />
+          className="pointer-events-none absolute top-1/2 left-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 items-center"
+          style={{ width: NODE_WIDTH, maxWidth: "100%" }}
+        >
+          <span className="animate-insertion-in flex w-full items-center">
+            <span
+              className="size-1.5 shrink-0 rounded-full"
+              style={{ background: accent }}
+            />
+            <span
+              className="h-[2px] min-w-0 flex-1"
+              style={{ background: accent }}
+            />
+          </span>
+        </span>
       ) : null}
       {showAdd && onAddCondition ? (
         <div

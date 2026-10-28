@@ -192,6 +192,17 @@
   }
 }
 
+@keyframes insertion-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
 .animate-node-in {
   animation: node-in 150ms ease-out;
 }
@@ -230,6 +241,10 @@
 
 .animate-decision-in {
   animation: decision-in 200ms ease-out;
+}
+
+.animate-insertion-in {
+  animation: insertion-in 120ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -281,6 +296,10 @@
   }
 
   .animate-decision-in {
+    animation: none;
+  }
+
+  .animate-insertion-in {
     animation: none;
   }
 }
