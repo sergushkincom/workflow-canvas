@@ -81,7 +81,7 @@ see "What the comments changed" below.
 ## Deliberately not built
 
 Zoom · minimap · true If/Else branching with two outgoing paths · multiple triggers ·
-persistence · real model calls · dark mode · a node library · a properties panel.
+persistence · real model calls · dark mode · a properties panel.
 
 Each of those is a real feature. None of them helps answer the question above, and the
 list of things I chose not to build is part of the work.
@@ -126,6 +126,27 @@ fights the pan.
 
 The assistant is scripted — a keyword matcher, not a model. The point is the
 behaviour, not the language understanding.
+
+## The palette — what a flow can be made of
+
+A canvas with a single "add step" button hides its own vocabulary: you can only learn
+what a flow is made of by building one. The palette makes that visible — node types
+grouped by what they do, searchable, and draggable onto the flow.
+
+Groups: **Triggers** · **Logic** · **AI steps** · **Actions** · **Data**. The names are
+deliberately generic. This prototype is about a class of problem, not a copy of any
+product.
+
+Two decisions carried over from the rest of the canvas:
+
+- **A new node arrives unconfigured, and that is not an error.** It says *Not configured
+  yet*, counts toward the incomplete total in the top bar, and blocks the run — with no
+  red borders. Same rule as a half-built condition.
+- **A refusal is a sentence, not silence.** Drag a second trigger onto a flow that
+  already has one and it says so, instead of quietly rejecting the drop.
+
+Click a card to append it, or drag it to choose where it lands; an insertion line shows
+the gap it will fill. Cards are focusable and can be added from the keyboard.
 
 ## What the comments changed
 
