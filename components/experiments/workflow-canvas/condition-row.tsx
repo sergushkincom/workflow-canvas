@@ -64,7 +64,7 @@ export function ConditionRowItem({
   return (
     <div
       className={cn(
-        "group/row flex min-w-0 flex-nowrap items-center gap-x-1.5 rounded-[8px] px-0.5 py-0.5",
+        "group/row flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1.5 rounded-[8px] px-0.5 py-0.5",
         isDragging && "shadow-raised",
       )}
       style={isDragging ? { background: color.surface } : undefined}
