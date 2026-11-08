@@ -12,15 +12,15 @@ import {
 import { Minus, X } from "lucide-react";
 
 import {
+  ALREADY_CHECKS_MESSAGE,
   ASSISTANT_SUGGESTIONS,
   describeDraftRow,
   describeWhatThisChecks,
   draftTicketLine,
-  draftsAlreadyPresent,
-  matchAssistantPrompt,
   sampleTicketLine,
+  suggestForCondition,
   uniqueDrafts,
-  type AssistantMatch,
+  type AssistantSuggestion,
   type DraftRow,
 } from "@/lib/experiments/workflow-canvas/assistant";
 import { accent, accentHover, color } from "@/lib/experiments/workflow-canvas/tokens";
@@ -46,7 +46,7 @@ export function ConditionAssistantPanel({
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
   const [prompt, setPrompt] = useState("");
-  const [match, setMatch] = useState<AssistantMatch | null>(null);
+  const [match, setMatch] = useState<AssistantSuggestion | null>(null);
   const [drafts, setDrafts] = useState<DraftRow[] | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -79,7 +79,7 @@ export function ConditionAssistantPanel({
   function applyPrompt(text: string) {
     setPrompt(text);
     setNotice(null);
-    const next = matchAssistantPrompt(text);
+    const next = suggestForCondition(text, node.rows);
     setMatch(next);
     setDrafts(next.kind === "draft" ? next.rows : null);
   }
@@ -93,12 +93,14 @@ export function ConditionAssistantPanel({
     if (!drafts || drafts.length === 0) {
       return;
     }
-    if (draftsAlreadyPresent(node.rows, drafts)) {
+    const extra = uniqueDrafts(node.rows, drafts);
+    if (extra.length === 0) {
       setPrompt("");
-      setNotice("This condition already checks that.");
+      setDrafts(null);
+      setMatch({ kind: "already", message: ALREADY_CHECKS_MESSAGE });
+      setNotice(null);
       return;
     }
-    const extra = uniqueDrafts(node.rows, drafts);
     dispatch({
       type: "appendRows",
       nodeId: node.id,
@@ -233,6 +235,11 @@ export function ConditionAssistantPanel({
             <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
               {match.message}
             </p>
+            {match.alreadyMessage ? (
+              <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+                {match.alreadyMessage}
+              </p>
+            ) : null}
             {match.choices.map((choice) => (
               <button
                 key={choice.label}
@@ -240,7 +247,14 @@ export function ConditionAssistantPanel({
                 className="rounded-[8px] px-2.5 py-2 text-left text-[13px] leading-snug"
                 style={{ background: color.field, color: color.ink }}
                 onClick={() => {
-                  setDrafts(choice.rows.map((row) => ({ ...row })));
+                  const rows = uniqueDrafts(node.rows, choice.rows);
+                  if (rows.length === 0) {
+                    setDrafts(null);
+                    setMatch({ kind: "already", message: ALREADY_CHECKS_MESSAGE });
+                    setNotice(null);
+                    return;
+                  }
+                  setDrafts(rows.map((row) => ({ ...row })));
                   setNotice(null);
                 }}
               >
@@ -250,16 +264,23 @@ export function ConditionAssistantPanel({
           </section>
         ) : null}
 
-        {match?.kind === "unknown" ? (
+        {match?.kind === "unknown" || match?.kind === "already" ? (
           <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
             {match.message}
           </p>
         ) : null}
 
         {match?.kind === "draft" && drafts ? (
-          <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
-            {match.message}
-          </p>
+          <div className="flex flex-col" style={{ gap: 8 }}>
+            <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+              {match.message}
+            </p>
+            {match.alreadyMessage ? (
+              <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+                {match.alreadyMessage}
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         {drafts && drafts.length > 0 ? (

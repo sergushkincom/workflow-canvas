@@ -45,6 +45,10 @@ export const UNKNOWN_FIELDS_MESSAGE =
 
 export const CONFIDENT_TWO_ROWS = "Two rows. I'm confident about these.";
 
+export const CONFIDENT_ONE_ROW = "One row. I'm confident about this.";
+
+export const ALREADY_CHECKS_MESSAGE = "This condition already checks that.";
+
 export const VIP_CHOICES: AssistantChoice[] = [
   {
     label: "Lifetime value is greater than 5,000",
@@ -96,6 +100,84 @@ export function uniqueDrafts(
   drafts: DraftRow[],
 ): DraftRow[] {
   return drafts.filter((draft) => !isDuplicateRow(existing, draft));
+}
+
+export type AssistantSuggestion =
+  | {
+      kind: "unsure";
+      message: string;
+      choices: AssistantChoice[];
+      alreadyMessage: string | null;
+    }
+  | {
+      kind: "draft";
+      message: string;
+      rows: DraftRow[];
+      alreadyMessage: string | null;
+    }
+  | { kind: "unknown"; message: string }
+  | { kind: "already"; message: string };
+
+function confidenceMessage(
+  original: string,
+  remaining: number,
+  originalCount: number,
+): string {
+  if (remaining === originalCount) {
+    return original;
+  }
+  if (remaining === 1 && original === CONFIDENT_TWO_ROWS) {
+    return CONFIDENT_ONE_ROW;
+  }
+  return original;
+}
+
+/**
+ * Keyword match, then drop any suggested row the node already has.
+ * A suggestion that is entirely duplicate becomes a refusal instead of a draft.
+ */
+export function suggestForCondition(
+  text: string,
+  existing: ConditionRow[],
+): AssistantSuggestion {
+  const match = matchAssistantPrompt(text);
+  if (match.kind === "unknown") {
+    return match;
+  }
+  if (match.kind === "unsure") {
+    let omitted = false;
+    const choices: AssistantChoice[] = [];
+    for (const choice of match.choices) {
+      const rows = uniqueDrafts(existing, choice.rows);
+      if (rows.length !== choice.rows.length) {
+        omitted = true;
+      }
+      if (rows.length === 0) {
+        continue;
+      }
+      choices.push({ ...choice, rows });
+    }
+    if (choices.length === 0) {
+      return { kind: "already", message: ALREADY_CHECKS_MESSAGE };
+    }
+    return {
+      kind: "unsure",
+      message: match.message,
+      choices,
+      alreadyMessage: omitted ? ALREADY_CHECKS_MESSAGE : null,
+    };
+  }
+  const rows = uniqueDrafts(existing, match.rows);
+  if (rows.length === 0) {
+    return { kind: "already", message: ALREADY_CHECKS_MESSAGE };
+  }
+  const omitted = rows.length !== match.rows.length;
+  return {
+    kind: "draft",
+    message: confidenceMessage(match.message, rows.length, match.rows.length),
+    rows,
+    alreadyMessage: omitted ? ALREADY_CHECKS_MESSAGE : null,
+  };
 }
 
 function formatNumberish(value: string): string {
