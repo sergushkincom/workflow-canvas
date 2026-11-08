@@ -174,10 +174,10 @@ export function ConditionNodeCard({
         </div>
 
         <div
-          className="flex flex-col"
+          className="flex min-w-0 flex-col"
           style={{ gap: 12, padding: 16 }}
         >
-          <ul className="flex flex-col" style={{ gap: 12 }}>
+          <ul className="flex min-w-0 flex-col" style={{ gap: 12 }}>
             {node.rows.map((row, index) => (
               <SortableRow
                 key={row.id}
@@ -303,7 +303,7 @@ function SortableRow({
   };
 
   return (
-    <li ref={setNodeRef} style={style}>
+    <li ref={setNodeRef} style={style} className="min-w-0 max-w-full">
       <ConditionRowItem
         row={row}
         index={index}
