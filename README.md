@@ -133,6 +133,10 @@ A canvas with a single "add step" button hides its own vocabulary: you can only 
 what a flow is made of by building one. The palette makes that visible — node types
 grouped by what they do, searchable, and draggable onto the flow.
 
+![The node palette open beside the canvas: Triggers, Logic, AI steps, Actions and Data](./preview-palette.png)
+
+*Build — the palette lists what a flow can be made of, grouped and searchable, before you add a step.*
+
 Groups: **Triggers** · **Logic** · **AI steps** · **Actions** · **Data**. The names are
 deliberately generic. This prototype is about a class of problem, not a copy of any
 product.
