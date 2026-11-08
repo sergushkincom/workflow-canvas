@@ -237,8 +237,13 @@ function useRunDriver(
   const bag = useRef(new TimerBag());
   const runRef = useRef(run);
   const flowRef = useRef(flow);
-  runRef.current = run;
-  flowRef.current = flow;
+
+  // Keep the "latest value" refs in sync after each render (refs must not be
+  // written during render). Declared first so it runs before the effects below.
+  useEffect(() => {
+    runRef.current = run;
+    flowRef.current = flow;
+  });
 
   const activeId = runningId(run);
   const nodeStateKey = Object.entries(run.nodeStates)
@@ -246,7 +251,8 @@ function useRunDriver(
     .join(",");
 
   useEffect(() => {
-    return () => bag.current.clearAll();
+    const timers = bag.current;
+    return () => timers.clearAll();
   }, []);
 
   useEffect(() => {
@@ -398,6 +404,9 @@ export function WorkflowCanvas({
     if (captureState === "running") {
       const stamp = { [SEED_CONDITION.id]: now - 450 };
       startedAtRef.current = stamp;
+      // Intentional: Date.now() must run on the client after hydration.
+      // TODO: refactor so start times are set by the event that starts a step.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStartedAt(stamp);
     }
     if (captureState === "awaiting") {
@@ -418,6 +427,9 @@ export function WorkflowCanvas({
   useEffect(() => {
     if (run.phase === "idle") {
       startedAtRef.current = {};
+      // Intentional: reset step timers whenever the run returns to idle.
+      // TODO: move this reset into the reset/restart handlers.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStartedAt({});
     }
   }, [run.phase]);
