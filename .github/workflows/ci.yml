@@ -1,5 +1,5 @@
 # Quality gate: every pull request and every push to main must install,
-# typecheck, lint and build cleanly before it can ship.
+# typecheck, lint, test and build cleanly before it can ship.
 # Docs: https://docs.github.com/en/actions/writing-workflows/quickstart
 name: CI
 
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Typecheck, lint, production build
+    name: Typecheck, lint, test, production build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -43,6 +43,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Unit tests
+        run: npm test
 
       - name: Production build
         run: npm run build

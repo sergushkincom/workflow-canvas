@@ -170,7 +170,10 @@ Building it turned up a second moving thing I hadn't counted: the step's timer, 
 npm install
 npm run dev
 # → http://localhost:3000/experiments/workflow-canvas
+npm test
 ```
+
+`npm test` runs the unit checks for flow editing, the run state machine, and the assistant's duplicate-condition rules.
 
 Add `?still=5` to the URL to make the waiting state go still after 5 seconds instead of 60 — handy for recording.
 

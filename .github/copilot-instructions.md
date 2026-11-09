@@ -19,11 +19,13 @@ Use the repo scripts from the root:
 ```bash
 npm install
 npm run dev
+npm test
 npm run build
 npm run lint
+npm run typecheck
 ```
 
-There is no test runner configured in `package.json`; there are no automated unit/integration tests in this repo today. For focused validation of changed files, use ESLint directly against the relevant file(s):
+`npm test` runs the colocated Node.js test-runner checks in `lib/experiments/workflow-canvas/*.check.ts`. For a narrower lint pass, ESLint can still target the files you changed:
 
 ```bash
 npx eslint app/experiments/workflow-canvas/page.tsx
@@ -31,7 +33,7 @@ npx eslint components/experiments/workflow-canvas/**/*.tsx
 npx eslint lib/experiments/workflow-canvas/**/*.ts
 ```
 
-If you add tests later, prefer existing repo conventions and keep the validation command scoped to the relevant file or directory instead of running a broad suite.
+New checks belong next to the module as `*.check.ts` and run under `npm test`. For a single file, pass it to the same `node --test` command instead of growing a second runner.
 
 ## High-level architecture
 
@@ -67,7 +69,7 @@ This is an intentionally static prototype. Do not introduce backend persistence,
 - Use branch names in the following style: `feat/...`, `fix/...`, `style/...`, or `docs/...`.
 - Keep each pull request focused on one change. Do not mix unrelated refactors or UI tweaks in the same PR.
 - PR titles should use the same conventional-commit style as the repository’s existing patterns, for example `style: palette polish` and `docs: palette section`.
-- Always run `npm run lint` and `npm run build` before opening a PR.
+- Always run `npm test`, `npm run lint`, and `npm run build` before opening a PR.
 - Do not push changes without explicit approval.
 
 ## Repo-specific instructions
