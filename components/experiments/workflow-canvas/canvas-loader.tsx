@@ -17,7 +17,7 @@ const WorkflowCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-dvh flex-col bg-page">
+      <div className="flex h-full flex-col bg-page">
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--line)] bg-surface px-4">
           <div className="flex items-center gap-2">
             <p className="text-[13px] font-semibold leading-tight text-ink">
@@ -45,7 +45,7 @@ function CanvasWithCaptureState() {
 
 export function CanvasLoader() {
   return (
-    <Suspense fallback={<div className="h-dvh bg-page" />}>
+    <Suspense fallback={<div className="h-full bg-page" />}>
       <CanvasWithCaptureState />
     </Suspense>
   );

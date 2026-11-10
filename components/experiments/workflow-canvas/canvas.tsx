@@ -648,7 +648,7 @@ export function WorkflowCanvas({
         onDragEnd={onPaletteDragEnd}
         onDragCancel={clearPaletteDrag}
       >
-      <div className="flex h-dvh bg-page">
+      <div className="flex h-full bg-page">
         <NodePalette
           notice={notice}
           locked={editingLocked}
