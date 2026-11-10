@@ -1,5 +1,10 @@
 # Workflow canvas
 
+**TL;DR.** A support-triage workflow builder. A trigger and condition steps on a canvas,
+then a Test run against one sample ticket. The AI step reaches 62% confidence, states
+what it is unsure about, and waits for a person — it doesn't count down or auto-confirm.
+[Live demo →](https://denys-workflow-canvas.vercel.app/experiments/workflow-canvas)
+
 **The question:** what does an interface look like when a system is honest about
 not knowing, and hands the decision back to a person?
 
