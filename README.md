@@ -1,3 +1,7 @@
+[![CI](https://github.com/sergushkincom/workflow-canvas/actions/workflows/ci.yml/badge.svg)](https://github.com/sergushkincom/workflow-canvas/actions/workflows/ci.yml)
+[![MIT](https://img.shields.io/github/license/sergushkincom/workflow-canvas)](https://github.com/sergushkincom/workflow-canvas/blob/main/LICENSE)
+[![Live](https://img.shields.io/badge/Live-demo-0E8A16)](https://denys-workflow-canvas.vercel.app/experiments/workflow-canvas)
+
 # Workflow canvas
 
 **TL;DR.** A support-triage workflow builder. A trigger and condition steps on a canvas,

@@ -1,6 +1,6 @@
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
@@ -16,18 +16,21 @@ Install and run from the repository root:
 npm install
 npm run dev
 npm test
+npm run test:e2e
 npm run build
 npm run lint
 npm run typecheck
 ```
 
-`npm test` runs the colocated `node:test` checks in `lib/experiments/workflow-canvas/*.check.ts` (flow reducer, run state machine, assistant duplicate-condition rules). The `test` script is:
+`npm test` runs the colocated `node:test` checks in `lib/experiments/workflow-canvas/*.test.ts` (flow reducer, run state machine, assistant duplicate-condition rules). The `test` script is:
 
 ```bash
-node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-test-hooks.mjs --test "lib/experiments/workflow-canvas/*.check.ts"
+node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-test-hooks.mjs --test "lib/experiments/workflow-canvas/*.test.ts"
 ```
 
-New checks belong next to the module as `*.check.ts` and run under `npm test`. For a single file, pass that path to the same `node --test` command — keep `--experimental-strip-types` and `--import ./scripts/register-test-hooks.mjs` — instead of growing a second runner.
+New checks belong next to the module as `*.test.ts` and run under `npm test`. For a single file, pass that path to the same `node --test` command — keep `--experimental-strip-types` and `--import ./scripts/register-test-hooks.mjs` — instead of growing a second runner.
+
+`npm run test:e2e` runs the Playwright test against the canvas. It starts the app itself (`next dev` locally, `next start` when `CI` is set, so run `npm run build` first in CI).
 
 For a narrower lint pass, ESLint can still target the files you changed:
 
@@ -37,7 +40,7 @@ npx eslint components/experiments/workflow-canvas/**/*.tsx
 npx eslint lib/experiments/workflow-canvas/**/*.ts
 ```
 
-CI (`.github/workflows/ci.yml`) installs with `npm ci`, then runs `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build`.
+CI (`.github/workflows/ci.yml`) installs with `npm ci`, then runs `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e`.
 
 ## Project overview
 
