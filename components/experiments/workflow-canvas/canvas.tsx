@@ -364,11 +364,26 @@ function useRunDriver(
 
 export function WorkflowCanvas({
   captureState,
+  initialFlow,
+  title = "Support triage",
+  onOpenTemplates,
+  autoFocusTitle = false,
 }: {
   captureState?: CaptureState;
+  initialFlow?: Flow;
+  title?: string;
+  onOpenTemplates?: () => void;
+  autoFocusTitle?: boolean;
 }) {
   const frozen = Boolean(captureState);
-  const [state, dispatch] = useReducer(flowReducer, initialFlowState);
+  const [state, dispatch] = useReducer(
+    flowReducer,
+    initialFlow,
+    (flow: Flow | undefined) =>
+      flow
+        ? { flow, selectedId: null, triggerHintVisible: false }
+        : initialFlowState,
+  );
   const [run, dispatchRun] = useReducer(
     runReducer,
     captureState ? captureRunSnapshot(captureState) : idleRun,
@@ -395,6 +410,13 @@ export function WorkflowCanvas({
   const hideEditChrome = editingLocked;
   const canAddSteps = !editingLocked;
   const assistantEnabled = run.phase === "idle";
+
+  useEffect(() => {
+    if (!autoFocusTitle) {
+      return;
+    }
+    document.getElementById("workflow-title")?.focus();
+  }, [autoFocusTitle]);
 
   useEffect(() => {
     if (!captureState) {
@@ -658,6 +680,8 @@ export function WorkflowCanvas({
         />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <TopBar
+          title={title}
+          onOpenTemplates={onOpenTemplates}
           stepCount={stepCount(state.flow)}
           incompleteCount={incomplete}
           runPhase={run.phase}
