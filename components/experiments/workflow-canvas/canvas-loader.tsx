@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
+import { parseNudgeDelay } from "@/lib/experiments/workflow-canvas/build-helper";
 import { isCaptureState } from "@/lib/experiments/workflow-canvas/capture-snapshots";
 
 const WorkflowApp = dynamic(
@@ -29,7 +30,13 @@ function CanvasWithParams() {
   const params = useSearchParams();
   const raw = params.get("state");
   const captureState = isCaptureState(raw) ? raw : undefined;
-  return <WorkflowApp captureState={captureState} flowId={params.get("flow")} />;
+  return (
+    <WorkflowApp
+      captureState={captureState}
+      flowId={params.get("flow")}
+      nudgeDelayMs={parseNudgeDelay(params.get("nudgeMs"))}
+    />
+  );
 }
 
 export function CanvasLoader() {

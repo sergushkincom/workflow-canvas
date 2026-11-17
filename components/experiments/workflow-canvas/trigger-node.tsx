@@ -27,6 +27,9 @@ type TriggerNodeCardProps = {
   elapsedMs?: number;
   startedAt?: number | null;
   runDurationMs?: number;
+  highlighted?: boolean;
+  onChooseTrigger?: () => void;
+  triggerPickerOpen?: boolean;
 };
 
 export function TriggerNodeCard({
@@ -41,6 +44,9 @@ export function TriggerNodeCard({
   elapsedMs,
   startedAt = null,
   runDurationMs,
+  highlighted = false,
+  onChooseTrigger,
+  triggerPickerOpen = false,
 }: TriggerNodeCardProps) {
   const tint = typeTint.trigger;
   const ticking = runState === "running";
@@ -59,6 +65,7 @@ export function TriggerNodeCard({
         readOnly={readOnly}
         running={runState === "running"}
         runDurationMs={runDurationMs}
+        highlighted={highlighted}
       >
         <div
           className="flex items-center gap-2.5"
@@ -101,6 +108,26 @@ export function TriggerNodeCard({
           ticking={ticking}
           startedAt={startedAt}
         />
+        {onChooseTrigger && !readOnly ? (
+          <div
+            className="border-t px-4 py-2.5"
+            style={{ borderColor: color.border }}
+          >
+            <button
+              type="button"
+              className="rounded-[6px] px-2 py-1 text-[12.5px] font-medium hover:bg-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+              style={{ color: color.ink, background: color.field }}
+              aria-haspopup="dialog"
+              aria-expanded={triggerPickerOpen}
+              onClick={(event) => {
+                event.stopPropagation();
+                onChooseTrigger();
+              }}
+            >
+              Choose trigger
+            </button>
+          </div>
+        ) : null}
       </NodeShell>
       {hintVisible ? (
         <p

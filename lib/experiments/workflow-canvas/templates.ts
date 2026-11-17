@@ -385,7 +385,102 @@ export const TEMPLATES: WorkflowTemplate[] = [
       { kind: "action", nodeTypeId: "send-email" },
     ],
   },
+  {
+    id: "form-notification",
+    name: "Form notification",
+    description:
+      "A form submission arrives as a webhook, the channel is checked, then an email goes out.",
+    category: "Notifications",
+    triggerId: "incoming-webhook",
+    badges: ["incoming-webhook", "send-email"],
+    popularity: 12,
+    createdAt: "2026-03-01",
+    setupMinutes: 2,
+    steps: [
+      {
+        kind: "condition",
+        conjunction: "and",
+        rows: [
+          {
+            source: "ticket",
+            field: "channel",
+            operator: "is",
+            value: "api",
+          },
+        ],
+      },
+      { kind: "action", nodeTypeId: "send-email" },
+    ],
+  },
+  {
+    id: "schedule-summary",
+    name: "Scheduled data summary",
+    description:
+      "Loads recent orders on a schedule and writes an AI summary.",
+    category: "Notifications",
+    triggerId: "on-a-schedule",
+    badges: ["on-a-schedule", "fetch-order-history", "summarise-thread"],
+    popularity: 11,
+    createdAt: "2026-03-02",
+    setupMinutes: 2,
+    steps: [
+      { kind: "action", nodeTypeId: "fetch-order-history" },
+      { kind: "action", nodeTypeId: "summarise-thread" },
+    ],
+  },
+  {
+    id: "webhook-email",
+    name: "Webhook to email",
+    description:
+      "A webhook updates the ticket, then sends an email. This prototype uses email for the Slack-or-email hand-off.",
+    category: "Notifications",
+    triggerId: "incoming-webhook",
+    badges: ["incoming-webhook", "update-ticket-field", "send-email"],
+    popularity: 10,
+    createdAt: "2026-03-03",
+    setupMinutes: 2,
+    steps: [
+      { kind: "action", nodeTypeId: "update-ticket-field" },
+      { kind: "action", nodeTypeId: "send-email" },
+    ],
+  },
+  {
+    id: "ai-agent-tools",
+    name: "Tools for an AI agent",
+    description:
+      "Looks up the customer, then drafts a reply with an AI step.",
+    category: "AI agents",
+    triggerId: "new-ticket-received",
+    badges: ["look-up-customer", "draft-reply"],
+    popularity: 9,
+    createdAt: "2026-03-04",
+    setupMinutes: 2,
+    steps: [
+      { kind: "action", nodeTypeId: "look-up-customer" },
+      { kind: "action", nodeTypeId: "draft-reply" },
+    ],
+  },
 ];
+
+/** Empty-canvas shortcuts. Labels are the chains; the flows live in TEMPLATES. */
+export const STARTER_CARDS = [
+  {
+    templateId: "form-notification",
+    label: "Form → condition → notification",
+  },
+  {
+    templateId: "schedule-summary",
+    label: "Schedule → fetch data → AI summary",
+  },
+  {
+    templateId: "webhook-email",
+    label: "Webhook → process → Slack or Email",
+  },
+  {
+    templateId: "ai-agent-tools",
+    label: "AI agent with tools",
+  },
+] as const;
 
 export type TemplateQuery = {
   query?: string;

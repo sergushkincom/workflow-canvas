@@ -24,6 +24,7 @@ type NodeShellProps = {
   dimmed?: boolean;
   running?: boolean;
   runDurationMs?: number;
+  highlighted?: boolean;
 };
 
 export function NodeShell({
@@ -39,17 +40,25 @@ export function NodeShell({
   dimmed = false,
   running = false,
   runDurationMs,
+  highlighted = false,
 }: NodeShellProps) {
   const tint = typeTint[tintKey];
 
   return (
     <div
+      data-build-highlight={highlighted ? "true" : undefined}
       className={cn(
         "group/node relative flex flex-col items-start",
         dimmed && "opacity-40",
         className,
       )}
-      style={{ width, gap: 6 }}
+      style={{
+        width,
+        gap: 6,
+        outline: highlighted ? `2px solid ${accent}` : undefined,
+        outlineOffset: highlighted ? 3 : undefined,
+        borderRadius: highlighted ? 14 : undefined,
+      }}
     >
       <span
         className="inline-flex items-center font-medium tracking-[0.04em] uppercase"

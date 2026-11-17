@@ -25,6 +25,7 @@ type ActionNodeCardProps = {
   onSelect: () => void;
   dispatch: (action: FlowAction) => void;
   readOnly?: boolean;
+  highlighted?: boolean;
 };
 
 export function ActionNodeCard({
@@ -35,6 +36,7 @@ export function ActionNodeCard({
   onSelect,
   dispatch,
   readOnly = false,
+  highlighted = false,
 }: ActionNodeCardProps) {
   const definition = getNodeType(node.nodeTypeId);
   const tintKey: TypeTintKey = definition?.tint ?? "neutral";
@@ -60,6 +62,7 @@ export function ActionNodeCard({
           dispatch({ type: "resizeNode", id: node.id, width })
         }
         readOnly={readOnly}
+        highlighted={highlighted}
       >
         <div className="flex items-center gap-2.5" style={{ padding: 16 }}>
           <PaletteIconTile icon={icon} tintKey={tintKey} />

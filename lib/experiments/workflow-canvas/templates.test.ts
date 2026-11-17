@@ -5,10 +5,12 @@ import { OPERATORS, getField } from "./data";
 import { initialFlowState } from "./flow-reducer";
 import { getNodeType } from "./node-types";
 import {
+  STARTER_CARDS,
   TEMPLATES,
   blankFlow,
   categoryCounts,
   filterTemplates,
+  getTemplate,
   materializeTemplate,
   resolveDirectOpen,
   templateMeta,
@@ -25,7 +27,7 @@ import {
 
 describe("workflow templates", () => {
   test("ships a local catalog the canvas can open", () => {
-    assert.ok(TEMPLATES.length >= 8 && TEMPLATES.length <= 12);
+    assert.ok(TEMPLATES.length >= 8 && TEMPLATES.length <= 16);
 
     const ids = TEMPLATES.map((template) => template.id);
     assert.equal(new Set(ids).size, ids.length);
@@ -118,7 +120,14 @@ describe("workflow templates", () => {
     });
     assert.deepEqual(
       notifications.map((template) => template.id),
-      ["daily-inbox-digest", "alert-on-failed-payments", "renewal-watch"],
+      [
+        "daily-inbox-digest",
+        "alert-on-failed-payments",
+        "renewal-watch",
+        "form-notification",
+        "schedule-summary",
+        "webhook-email",
+      ],
     );
 
     const summarised = filterTemplates(TEMPLATES, {
@@ -126,7 +135,7 @@ describe("workflow templates", () => {
     });
     assert.deepEqual(
       summarised.map((template) => template.id).sort(),
-      ["daily-inbox-digest", "draft-replies-for-review"],
+      ["daily-inbox-digest", "draft-replies-for-review", "schedule-summary"],
     );
 
     const handoff = filterTemplates(TEMPLATES, {
@@ -149,7 +158,7 @@ describe("workflow templates", () => {
 
     const byNewest = filterTemplates(TEMPLATES, { sort: "newest" });
     assert.equal(byNewest[0]?.id, "renewal-watch");
-    assert.equal(byNewest.at(-1)?.id, "triage-support-tickets");
+    assert.equal(byNewest.at(-1)?.id, "form-notification");
   });
 
   test("category counts follow the other filters", () => {
@@ -157,7 +166,7 @@ describe("workflow templates", () => {
     assert.equal(counts[0]?.count, TEMPLATES.length);
     assert.equal(
       counts.find((item) => item.id === "Notifications")?.count,
-      3,
+      6,
     );
 
     const searched = categoryCounts(TEMPLATES, { query: "email" });
@@ -177,5 +186,23 @@ describe("workflow templates", () => {
     assert.equal(resolveDirectOpen(null), null);
     assert.equal(resolveDirectOpen(""), null);
     assert.equal(resolveDirectOpen("missing"), null);
+  });
+
+  test("starter cards point at templates the editor can open", () => {
+    assert.equal(STARTER_CARDS.length, 4);
+    const labels = STARTER_CARDS.map((card) => card.label);
+    assert.deepEqual(labels, [
+      "Form → condition → notification",
+      "Schedule → fetch data → AI summary",
+      "Webhook → process → Slack or Email",
+      "AI agent with tools",
+    ]);
+    for (const card of STARTER_CARDS) {
+      const template = getTemplate(card.templateId);
+      assert.ok(template, card.templateId);
+      const flow = materializeTemplate(template);
+      assert.ok(flow.steps.length >= 2, card.templateId);
+      assert.equal(flow.trigger.title.length > 0, true);
+    }
   });
 });

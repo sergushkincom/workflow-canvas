@@ -5,6 +5,8 @@ export type TriggerNode = {
   title: string;
   description: string;
   width: number;
+  /** Palette id when the trigger was chosen or set by the build helper. */
+  nodeTypeId?: string;
 };
 
 export type ConditionRow = {
@@ -65,7 +67,14 @@ export type FlowAction =
   | { type: "resizeNode"; id: string; width: number }
   | { type: "insertNode"; id: string; nodeTypeId: string; index: number }
   | { type: "showTriggerHint" }
-  | { type: "clearTriggerHint" };
+  | { type: "clearTriggerHint" }
+  | {
+      type: "setTrigger";
+      nodeTypeId: string;
+      title: string;
+      description: string;
+    }
+  | { type: "replaceFlow"; flow: Flow };
 
 export function isConditionNode(node: StepNode): node is ConditionNode {
   return !("kind" in node);
