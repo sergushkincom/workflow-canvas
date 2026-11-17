@@ -3,7 +3,21 @@
 import { useState, type RefObject } from "react";
 
 import type { ShellSection } from "./app-sidebar";
+import { BuildHelperPanel, type BuiltWorkflow } from "./build-helper-panel";
+import { BuildNudge } from "./build-nudge";
+import { useBuildSession } from "./build-session";
+import { StarterCards } from "./starter-cards";
+import { TriggerPicker } from "./trigger-picker";
+import { useIdleNudge } from "./use-idle-nudge";
 import { Button } from "@/components/ui/button";
+import {
+  BUILD_HELPER_DESCRIPTION,
+  BUILD_HELPER_LABEL,
+} from "@/lib/experiments/workflow-canvas/build-helper";
+import {
+  blankFlow,
+  type WorkflowTemplate,
+} from "@/lib/experiments/workflow-canvas/templates";
 import { color } from "@/lib/experiments/workflow-canvas/tokens";
 
 const focusRing =
@@ -30,20 +44,33 @@ const QUIET: Record<
 type FirstRunShellProps = {
   section: ShellSection;
   addStepRef: RefObject<HTMLButtonElement | null>;
+  nudgePaused: boolean;
   onOpenTemplates: () => void;
-  onStartBlank: () => void;
+  onChooseTrigger: (nodeTypeId: string) => void;
+  onOpenBuilt: (result: BuiltWorkflow) => void;
+  onOpenTemplate: (template: WorkflowTemplate, label: string) => void;
 };
 
 export function FirstRunShell({
   section,
   addStepRef,
+  nudgePaused,
   onOpenTemplates,
-  onStartBlank,
+  onChooseTrigger,
+  onOpenBuilt,
+  onOpenTemplate,
 }: FirstRunShellProps) {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
       {section === "home" ? (
-        <HomeCanvas addStepRef={addStepRef} onStartBlank={onStartBlank} />
+        <HomeCanvas
+          addStepRef={addStepRef}
+          nudgePaused={nudgePaused}
+          onOpenTemplates={onOpenTemplates}
+          onChooseTrigger={onChooseTrigger}
+          onOpenBuilt={onOpenBuilt}
+          onOpenTemplate={onOpenTemplate}
+        />
       ) : null}
       {section === "workflows" ? (
         <WorkflowsEmpty onOpenTemplates={onOpenTemplates} />
@@ -57,12 +84,60 @@ export function FirstRunShell({
 
 function HomeCanvas({
   addStepRef,
-  onStartBlank,
+  nudgePaused,
+  onOpenTemplates,
+  onChooseTrigger,
+  onOpenBuilt,
+  onOpenTemplate,
 }: {
   addStepRef: RefObject<HTMLButtonElement | null>;
-  onStartBlank: () => void;
+  nudgePaused: boolean;
+  onOpenTemplates: () => void;
+  onChooseTrigger: (nodeTypeId: string) => void;
+  onOpenBuilt: (result: BuiltWorkflow) => void;
+  onOpenTemplate: (template: WorkflowTemplate, label: string) => void;
 }) {
   const [saveNote, setSaveNote] = useState<string | null>(null);
+  const [helperOpen, setHelperOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const session = useBuildSession();
+  const emptyIdle = !nudgePaused && !pickerOpen && !helperOpen;
+
+  useIdleNudge({
+    active: emptyIdle,
+    context: "empty-canvas",
+    delayMs: session.nudgeDelayMs,
+    used: session.nudge.used.includes("empty-canvas"),
+    onDue: session.showNudge,
+  });
+  useIdleNudge({
+    active: pickerOpen && !nudgePaused,
+    context: "trigger-picker",
+    delayMs: session.nudgeDelayMs,
+    used: session.nudge.used.includes("trigger-picker"),
+    onDue: session.showNudge,
+  });
+
+  function openPicker() {
+    setHelperOpen(false);
+    setPickerOpen(true);
+    session.dismissNudge();
+  }
+
+  function closePicker() {
+    setPickerOpen(false);
+    addStepRef.current?.focus();
+  }
+
+  function chooseTrigger(nodeTypeId: string) {
+    setPickerOpen(false);
+    onChooseTrigger(nodeTypeId);
+  }
+
+  const showEmptyNudge =
+    session.nudge.visible === "empty-canvas" && emptyIdle;
+  const showPickerNudge =
+    session.nudge.visible === "trigger-picker" && pickerOpen;
 
   return (
     <>
@@ -116,16 +191,80 @@ function HomeCanvas({
           </Button>
         </div>
       </header>
-      <div className="canvas-dots relative min-h-0 flex-1">
-        <button
-          ref={addStepRef}
-          type="button"
-          className={`absolute top-[44%] left-1/2 grid h-[84px] w-[min(300px,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-[12px] border-[1.5px] border-dashed bg-transparent text-[13px] ${focusRing}`}
-          style={{ borderColor: color.dashed, color: color.faint }}
-          onClick={onStartBlank}
-        >
-          + Add first step
-        </button>
+      <div className="canvas-dots flex min-h-0 flex-1 flex-col overflow-auto">
+        <div className="m-auto flex w-full max-w-3xl flex-col items-center gap-3 px-4 py-8">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              className={`h-[84px] rounded-[12px] border-[1.5px] bg-surface px-4 text-left ${focusRing}`}
+              style={{ borderColor: color.border, color: color.ink }}
+              aria-expanded={helperOpen}
+              aria-controls="build-helper"
+              aria-describedby="build-helper-blurb"
+              onClick={() => {
+                setPickerOpen(false);
+                setHelperOpen((open) => !open);
+                session.dismissNudge();
+              }}
+            >
+              <span className="block text-[13px] font-semibold">
+                {BUILD_HELPER_LABEL}
+              </span>
+            </button>
+            <button
+              ref={addStepRef}
+              type="button"
+              className={`grid h-[84px] w-[min(300px,calc(100%-1rem))] place-items-center rounded-[12px] border-[1.5px] border-dashed bg-transparent text-[13px] ${focusRing}`}
+              style={{ borderColor: color.dashed, color: color.faint }}
+              aria-haspopup="dialog"
+              aria-expanded={pickerOpen}
+              onClick={openPicker}
+            >
+              + Add first step
+            </button>
+          </div>
+          <p
+            id="build-helper-blurb"
+            className="max-w-md text-center text-[13px] leading-snug"
+            style={{ color: color.muted }}
+          >
+            {BUILD_HELPER_DESCRIPTION}
+          </p>
+          {helperOpen ? (
+            <BuildHelperPanel
+              flow={blankFlow()}
+              alwaysAllow={session.alwaysAllow}
+              onAlwaysAllow={session.setAlwaysAllow}
+              onRecord={session.record}
+              onApplied={onOpenBuilt}
+              onClose={() => {
+                setHelperOpen(false);
+              }}
+            />
+          ) : null}
+          {pickerOpen ? (
+            <TriggerPicker onChoose={chooseTrigger} onClose={closePicker} />
+          ) : null}
+          {showEmptyNudge || showPickerNudge ? (
+            <BuildNudge
+              onHelp={() => {
+                setPickerOpen(false);
+                setHelperOpen(true);
+                session.dismissNudge();
+              }}
+              onDismiss={session.dismissNudge}
+            />
+          ) : null}
+          <StarterCards onOpen={onOpenTemplate} />
+          <button
+            type="button"
+            className={`text-[13px] font-medium underline-offset-2 hover:underline ${focusRing}`}
+            style={{ color: color.ink }}
+            onClick={onOpenTemplates}
+          >
+            Browse all templates
+          </button>
+        </div>
       </div>
     </>
   );

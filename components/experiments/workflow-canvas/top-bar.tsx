@@ -10,6 +10,10 @@ import {
   formatElapsed,
   type RunPhase,
 } from "@/lib/experiments/workflow-canvas/run-machine";
+import {
+  BUILD_HELPER_DESCRIPTION,
+  BUILD_HELPER_LABEL,
+} from "@/lib/experiments/workflow-canvas/build-helper";
 import { color } from "@/lib/experiments/workflow-canvas/tokens";
 
 type TopBarProps = {
@@ -21,6 +25,8 @@ type TopBarProps = {
   onTestRun: () => void;
   onStop: () => void;
   onOpenTemplates?: () => void;
+  helperOpen?: boolean;
+  onToggleHelper?: () => void;
 };
 
 export function TopBar({
@@ -32,6 +38,8 @@ export function TopBar({
   onTestRun,
   onStop,
   onOpenTemplates,
+  helperOpen = false,
+  onToggleHelper,
 }: TopBarProps) {
   const stepLabel = stepCount === 1 ? "1 step" : `${stepCount} steps`;
   const summary =
@@ -58,7 +66,7 @@ export function TopBar({
 
   return (
     <header
-      className="flex h-12 shrink-0 items-center justify-between gap-3 border-b px-6"
+      className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b px-4 py-1.5 sm:px-6"
       style={{ borderColor: color.border, background: color.surface }}
     >
       <div className="flex min-w-0 items-center gap-2">
@@ -78,6 +86,25 @@ export function TopBar({
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        {onToggleHelper ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="h-7 shrink-0 rounded-[6px] px-2.5 text-[12px] font-medium shadow-none"
+            style={{ background: color.field, color: color.ink }}
+            aria-expanded={helperOpen}
+            aria-controls="build-helper"
+            aria-describedby="build-helper-desc"
+            title={BUILD_HELPER_DESCRIPTION}
+            onClick={onToggleHelper}
+          >
+            {BUILD_HELPER_LABEL}
+          </Button>
+        ) : null}
+        <span id="build-helper-desc" className="sr-only">
+          {BUILD_HELPER_DESCRIPTION}
+        </span>
         {onOpenTemplates ? (
           <Button
             type="button"

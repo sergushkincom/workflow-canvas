@@ -85,7 +85,7 @@ test("new user filters templates and edits the one they pick", async ({
   await expect(
     page.getByRole("button", { name: "Add first step" }),
   ).toBeFocused();
-  await page.getByRole("button", { name: "Templates" }).click();
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
   await expect(dialog).toBeVisible();
 
   const search = dialog.getByRole("searchbox", { name: "Search templates" });
@@ -147,7 +147,7 @@ test("new user filters templates and edits the one they pick", async ({
   await expect(value).toHaveValue("6000");
   await expect(page.getByRole("button", { name: "Test run" })).toBeEnabled();
 
-  await page.getByRole("button", { name: "Templates" }).click();
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
   await expect(dialog).toBeVisible();
 });
 

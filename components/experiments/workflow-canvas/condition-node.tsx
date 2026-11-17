@@ -47,6 +47,7 @@ type ConditionNodeCardProps = {
   assistantOpen?: boolean;
   assistantMinimized?: boolean;
   assistantNarrow?: boolean;
+  highlighted?: boolean;
   onAssistantOpen?: () => void;
   onAssistantClose?: () => void;
   onAssistantMinimize?: () => void;
@@ -70,6 +71,7 @@ export function ConditionNodeCard({
   assistantOpen = false,
   assistantMinimized = false,
   assistantNarrow = false,
+  highlighted = false,
   onAssistantOpen,
   onAssistantClose,
   onAssistantMinimize,
@@ -111,6 +113,7 @@ export function ConditionNodeCard({
         readOnly={readOnly}
         running={runState === "running"}
         runDurationMs={runDurationMs}
+        highlighted={highlighted}
       >
         <div
           className="flex items-center gap-2.5 border-b"

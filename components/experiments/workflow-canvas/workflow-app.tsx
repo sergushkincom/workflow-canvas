@@ -10,9 +10,13 @@ import {
   SIDEBAR_WIDTH_PX,
   type ShellSection,
 } from "./app-sidebar";
+import type { BuiltWorkflow } from "./build-helper-panel";
+import { BuildSessionProvider } from "./build-session";
 import { FirstRunShell } from "./first-run-shell";
 import { TemplatesModal } from "./templates-modal";
+import { IDLE_NUDGE_MS } from "@/lib/experiments/workflow-canvas/build-helper";
 import { initialFlowState } from "@/lib/experiments/workflow-canvas/flow-reducer";
+import { getNodeType } from "@/lib/experiments/workflow-canvas/node-types";
 import {
   BLANK_WORKFLOW_NAME,
   blankFlow,
@@ -44,6 +48,11 @@ type EditorSession = {
   name: string;
   flow: Flow;
   autoFocusTitle: boolean;
+  highlight?: {
+    ids: string[];
+    summary: string;
+    undoFlow: Flow;
+  };
 };
 
 function sessionFromProps(
@@ -92,9 +101,11 @@ function useNarrowShell() {
 export function WorkflowApp({
   captureState,
   flowId,
+  nudgeDelayMs = IDLE_NUDGE_MS,
 }: {
   captureState?: CaptureState;
   flowId?: string | null;
+  nudgeDelayMs?: number;
 }) {
   const initialEditor = sessionFromProps(captureState, flowId);
   const [editor, setEditor] = useState<EditorSession | null>(initialEditor);
@@ -111,12 +122,16 @@ export function WorkflowApp({
   const collapsed = showEditor || narrow;
   const sidebarWidth = collapsed ? SIDEBAR_RAIL_PX : SIDEBAR_WIDTH_PX;
 
-  function openEditor(name: string, flow: Flow) {
+  function openEditor(
+    name: string,
+    flow: Flow,
+    highlight?: EditorSession["highlight"],
+  ) {
     const key = `editor-${nextKey.current}`;
     nextKey.current += 1;
     pendingFocus.current = "editor";
     setFrozen(false);
-    setEditor({ key, name, flow, autoFocusTitle: true });
+    setEditor({ key, name, flow, autoFocusTitle: true, highlight });
     setShowEditor(true);
     setSection("workflows");
     setModalOpen(false);
@@ -140,9 +155,42 @@ export function WorkflowApp({
     openEditor(BLANK_WORKFLOW_NAME, blankFlow());
   }
 
+  function chooseTrigger(nodeTypeId: string) {
+    const definition = getNodeType(nodeTypeId);
+    const flow = blankFlow();
+    if (definition) {
+      flow.trigger = {
+        ...flow.trigger,
+        nodeTypeId: definition.id,
+        title: definition.title,
+        description: definition.subtitle,
+      };
+    }
+    openEditor(BLANK_WORKFLOW_NAME, flow);
+  }
+
+  function openBuilt(result: BuiltWorkflow) {
+    openEditor(
+      result.name,
+      result.flow,
+      result.summary
+        ? {
+            ids: result.highlightedIds,
+            summary: result.summary,
+            undoFlow: result.undoFlow,
+          }
+        : undefined,
+    );
+  }
+
+  function openStarter(template: WorkflowTemplate, label: string) {
+    openEditor(label, materializeTemplate(template));
+  }
+
   const onHome = !showEditor;
 
   return (
+    <BuildSessionProvider nudgeDelayMs={nudgeDelayMs}>
     <div className="flex h-full min-h-0">
       <AppSidebar
         section={showEditor ? "workflows" : section}
@@ -159,13 +207,17 @@ export function WorkflowApp({
             initialFlow={frozen ? undefined : editor.flow}
             title={editor.name}
             autoFocusTitle={editor.autoFocusTitle}
+            initialHighlight={editor.highlight}
           />
         ) : (
           <FirstRunShell
             section={section}
             addStepRef={addStepRef}
+            nudgePaused={modalOpen}
             onOpenTemplates={() => setModalOpen(true)}
-            onStartBlank={startBlank}
+            onChooseTrigger={chooseTrigger}
+            onOpenBuilt={openBuilt}
+            onOpenTemplate={openStarter}
           />
         )}
       </div>
@@ -196,5 +248,6 @@ export function WorkflowApp({
         />
       )}
     </div>
+    </BuildSessionProvider>
   );
 }

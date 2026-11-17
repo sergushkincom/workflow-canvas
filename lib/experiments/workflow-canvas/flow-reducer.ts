@@ -237,6 +237,37 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
       return { ...state, triggerHintVisible: true, selectedId: "trigger" };
     case "clearTriggerHint":
       return { ...state, triggerHintVisible: false };
+    case "setTrigger": {
+      const current = state.flow.trigger;
+      if (
+        current.nodeTypeId === action.nodeTypeId &&
+        current.title === action.title &&
+        current.description === action.description
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        triggerHintVisible: false,
+        selectedId: "trigger",
+        flow: {
+          ...state.flow,
+          trigger: {
+            ...current,
+            nodeTypeId: action.nodeTypeId,
+            title: action.title,
+            description: action.description,
+          },
+        },
+      };
+    }
+    case "replaceFlow":
+      return {
+        ...state,
+        triggerHintVisible: false,
+        selectedId: null,
+        flow: action.flow,
+      };
     default:
       return state;
   }

@@ -28,6 +28,13 @@ import {
 } from "react";
 
 import { ActionNodeCard } from "./action-node";
+import {
+  BuildHelperPanel,
+  ChangeSummary,
+  type BuiltWorkflow,
+} from "./build-helper-panel";
+import { BuildNudge } from "./build-nudge";
+import { useBuildSession } from "./build-session";
 import { ConditionNodeCard } from "./condition-node";
 import { Connector } from "./connector";
 import { NodePalette, PaletteCardPreview } from "./node-palette";
@@ -36,7 +43,9 @@ import type { DecisionLabel } from "./run/decision-panel";
 import { ResultCard } from "./run/result-card";
 import { SampleTicketCard } from "./run/sample-ticket-card";
 import { TopBar } from "./top-bar";
+import { TriggerPicker } from "./trigger-picker";
 import { TriggerNodeCard } from "./trigger-node";
+import { useIdleNudge } from "./use-idle-nudge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   CLASSIFY_REASONING,
@@ -368,12 +377,18 @@ export function WorkflowCanvas({
   title = "Support triage",
   onOpenTemplates,
   autoFocusTitle = false,
+  initialHighlight,
 }: {
   captureState?: CaptureState;
   initialFlow?: Flow;
   title?: string;
   onOpenTemplates?: () => void;
   autoFocusTitle?: boolean;
+  initialHighlight?: {
+    ids: string[];
+    summary: string;
+    undoFlow: Flow;
+  };
 }) {
   const frozen = Boolean(captureState);
   const [state, dispatch] = useReducer(
@@ -396,6 +411,16 @@ export function WorkflowCanvas({
   const [assistantId, setAssistantId] = useState<string | null>(null);
   const [assistantMinimized, setAssistantMinimized] = useState(false);
   const [assistantNarrow, setAssistantNarrow] = useState(false);
+  const session = useBuildSession();
+  const [helperOpen, setHelperOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [highlightIds, setHighlightIds] = useState<string[]>(
+    () => initialHighlight?.ids ?? [],
+  );
+  const [changeSummary, setChangeSummary] = useState<string | null>(
+    () => initialHighlight?.summary ?? null,
+  );
+  const undoRef = useRef<Flow | null>(initialHighlight?.undoFlow ?? null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -410,6 +435,14 @@ export function WorkflowCanvas({
   const hideEditChrome = editingLocked;
   const canAddSteps = !editingLocked;
   const assistantEnabled = run.phase === "idle";
+
+  useIdleNudge({
+    active: pickerOpen && !frozen,
+    context: "trigger-picker",
+    delayMs: session.nudgeDelayMs,
+    used: session.nudge.used.includes("trigger-picker"),
+    onDue: session.showNudge,
+  });
 
   useEffect(() => {
     if (!autoFocusTitle) {
@@ -499,7 +532,9 @@ export function WorkflowCanvas({
       }
       if (
         event.target instanceof HTMLElement &&
-        event.target.closest("[data-node-palette]")
+        (event.target.closest("[data-node-palette]") ||
+          event.target.closest("[data-build-helper]") ||
+          event.target.closest("[data-trigger-picker]"))
       ) {
         return;
       }
@@ -682,6 +717,16 @@ export function WorkflowCanvas({
         <TopBar
           title={title}
           onOpenTemplates={onOpenTemplates}
+          helperOpen={helperOpen}
+          onToggleHelper={
+            frozen
+              ? undefined
+              : () => {
+                  setPickerOpen(false);
+                  setHelperOpen((open) => !open);
+                  session.dismissNudge();
+                }
+          }
           stepCount={stepCount(state.flow)}
           incompleteCount={incomplete}
           runPhase={run.phase}
@@ -691,15 +736,18 @@ export function WorkflowCanvas({
               return;
             }
             closeAssistant();
+            setHelperOpen(false);
+            setPickerOpen(false);
             setStartedAt({});
             startedAtRef.current = {};
             dispatchRun({ type: "start", flow: state.flow });
           }}
           onStop={stopRun}
         />
+        <div className="relative min-h-0 min-w-0 flex-1">
         <div
           data-workflow-canvas=""
-          className="canvas-dots relative min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-auto"
+          className="canvas-dots absolute inset-0 overflow-x-auto overflow-y-auto"
           onClick={(event) => {
             if (editingLocked) {
               return;
@@ -707,7 +755,7 @@ export function WorkflowCanvas({
             if (event.target === event.currentTarget) {
               safeEdit({ type: "select", id: null });
             }
-          }          }
+          }}
         >
           {notice ? (
             <p
@@ -720,7 +768,7 @@ export function WorkflowCanvas({
           <div
             role="listbox"
             aria-label="Workflow steps"
-            className="canvas-flow mx-auto flex min-h-full w-full max-w-3xl flex-col items-center px-4 pt-6 pb-10"
+            className="canvas-flow mx-auto flex min-h-full w-full max-w-3xl flex-col items-center px-4 pt-6 pb-28"
             onClick={(event) => {
               if (editingLocked) {
                 return;
@@ -748,6 +796,17 @@ export function WorkflowCanvas({
               elapsedMs={run.elapsed.trigger}
               startedAt={startedAt.trigger ?? null}
               runDurationMs={TRIGGER_MS}
+              highlighted={highlightIds.includes(state.flow.trigger.id)}
+              triggerPickerOpen={pickerOpen}
+              onChooseTrigger={
+                frozen || editingLocked
+                  ? undefined
+                  : () => {
+                      setHelperOpen(false);
+                      setPickerOpen((open) => !open);
+                      session.dismissNudge();
+                    }
+              }
             />
 
             {state.flow.steps.map((node, index) => {
@@ -806,6 +865,7 @@ export function WorkflowCanvas({
                           setAssistantId(node.id);
                           setAssistantMinimized(true);
                         }}
+                        highlighted={highlightIds.includes(node.id)}
                       />
                     </SortableContext>
                   </DndContext>
@@ -820,6 +880,7 @@ export function WorkflowCanvas({
                       }
                       dispatch={safeEdit}
                       readOnly={editingLocked}
+                      highlighted={highlightIds.includes(node.id)}
                     />
                   )}
                   {isLast && !showClassify ? (
@@ -886,6 +947,81 @@ export function WorkflowCanvas({
               />
             ) : null}
           </div>
+        </div>
+          {helperOpen && !frozen ? (
+            <div className="pointer-events-none absolute inset-x-3 top-3 z-30 flex justify-end">
+              <div className="pointer-events-auto">
+                <BuildHelperPanel
+                  flow={state.flow}
+                  alwaysAllow={session.alwaysAllow}
+                  onAlwaysAllow={session.setAlwaysAllow}
+                  onRecord={session.record}
+                  onApplied={(result: BuiltWorkflow) => {
+                    undoRef.current = result.undoFlow;
+                    setHighlightIds(result.highlightedIds);
+                    setChangeSummary(result.summary);
+                    safeEdit({ type: "replaceFlow", flow: result.flow });
+                  }}
+                  onClose={() => setHelperOpen(false)}
+                />
+              </div>
+            </div>
+          ) : null}
+          {pickerOpen && !frozen ? (
+            <div className="absolute top-16 left-1/2 z-30 w-[min(320px,calc(100%-2rem))] -translate-x-1/2">
+              <TriggerPicker
+                onChoose={(nodeTypeId) => {
+                  const definition = getNodeType(nodeTypeId);
+                  if (!definition || editingLocked) {
+                    return;
+                  }
+                  safeEdit({
+                    type: "setTrigger",
+                    nodeTypeId: definition.id,
+                    title: definition.title,
+                    description: definition.subtitle,
+                  });
+                  setPickerOpen(false);
+                }}
+                onClose={() => setPickerOpen(false)}
+              />
+            </div>
+          ) : null}
+          {session.nudge.visible === "trigger-picker" && pickerOpen ? (
+            <div className="absolute inset-x-3 bottom-20 z-30 flex justify-center">
+              <BuildNudge
+                onHelp={() => {
+                  setPickerOpen(false);
+                  setHelperOpen(true);
+                  session.dismissNudge();
+                }}
+                onDismiss={session.dismissNudge}
+              />
+            </div>
+          ) : null}
+          {changeSummary ? (
+            <div className="absolute inset-x-3 bottom-3 z-30 flex justify-center">
+              <ChangeSummary
+                summary={changeSummary}
+                onUndo={() => {
+                  const previous = undoRef.current;
+                  if (!previous) {
+                    return;
+                  }
+                  undoRef.current = null;
+                  setHighlightIds([]);
+                  setChangeSummary(null);
+                  session.record({ type: "undo" });
+                  safeEdit({ type: "replaceFlow", flow: previous });
+                }}
+                onDismiss={() => {
+                  undoRef.current = null;
+                  setHighlightIds([]);
+                  setChangeSummary(null);
+                }}
+              />
+            </div>
+          ) : null}
         </div>
         </div>
       </div>
