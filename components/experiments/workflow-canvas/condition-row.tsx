@@ -1,6 +1,7 @@
 "use client";
 
 import type { HTMLAttributes } from "react";
+import { X } from "lucide-react";
 
 import { FieldInput, SelectChip } from "./field-select";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,7 @@ import type {
   ConditionRow,
   Conjunction,
 } from "@/lib/experiments/workflow-canvas/types";
-import { accent, color } from "@/lib/experiments/workflow-canvas/tokens";
+import { color, tokenStyle } from "@/lib/experiments/workflow-canvas/tokens";
 
 type HandleProps = HTMLAttributes<HTMLButtonElement> & {
   ref: (element: HTMLButtonElement | null) => void;
@@ -64,7 +65,7 @@ export function ConditionRowItem({
   return (
     <div
       className={cn(
-        "group/row flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1.5 rounded-[8px] px-0.5 py-0.5",
+        "group/row relative flex w-full min-w-0 flex-wrap items-center gap-x-[5px] gap-y-1.5 rounded-[8px] py-0.5",
         isDragging && "shadow-raised",
       )}
       style={isDragging ? { background: color.surface } : undefined}
@@ -75,10 +76,10 @@ export function ConditionRowItem({
         aria-label={`Reorder condition row ${index + 1}`}
         tabIndex={hideEditChrome ? -1 : 0}
         className={cn(
-          "flex size-6 shrink-0 items-center justify-center rounded-[6px] transition-opacity",
+          "row-chrome focus-ring-icon absolute top-1 -left-4 z-10 flex size-6 items-center justify-center rounded-[6px] bg-surface outline-none transition-opacity",
           hideEditChrome
             ? "pointer-events-none opacity-0"
-            : "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100",
+            : "pointer-events-none opacity-0 group-hover/row:pointer-events-auto group-hover/row:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100",
         )}
         style={{ color: color.faint }}
         onKeyDown={(event) => {
@@ -98,7 +99,7 @@ export function ConditionRowItem({
 
       {index === 0 ? (
         <span
-          className="w-7 shrink-0 text-[12.5px]"
+          className="w-7 shrink-0 text-[12px] leading-[1.4]"
           style={{ color: color.muted }}
         >
           If
@@ -108,11 +109,10 @@ export function ConditionRowItem({
           type="button"
           data-ui
           aria-label={`Conjunction, currently ${conjunction}. Toggle and or or for this node.`}
-          className="h-6 w-7 shrink-0 rounded-[6px] text-[12.5px] focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="focus-ring-icon h-6 w-7 shrink-0 rounded-[6px] text-[12px] leading-[1.4] outline-none"
           style={{
             background: color.field,
             color: color.muted,
-            outlineColor: accent,
           }}
           onClick={(event) => {
             event.stopPropagation();
@@ -216,10 +216,10 @@ export function ConditionRowItem({
         aria-label={`Delete condition row ${index + 1}`}
         tabIndex={hideEditChrome ? -1 : 0}
         className={cn(
-          "ml-auto flex size-6 shrink-0 items-center justify-center rounded-[6px] transition-opacity",
+          "row-chrome focus-ring-icon absolute top-1 -right-4 z-10 flex size-6 items-center justify-center rounded-[6px] bg-surface outline-none transition-opacity",
           hideEditChrome
             ? "pointer-events-none opacity-0"
-            : "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100",
+            : "pointer-events-none opacity-0 group-hover/row:pointer-events-auto group-hover/row:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100",
         )}
         style={{ color: color.faint }}
         onClick={(event) => {
@@ -252,13 +252,10 @@ function Handle() {
 
 function DeleteGlyph() {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
-      <path
-        d="M3 3l6 6M9 3L3 9"
-        stroke="currentColor"
-        strokeWidth="1.25"
-        strokeLinecap="round"
-      />
-    </svg>
+    <X
+      size={tokenStyle.chromeIcon.size}
+      strokeWidth={tokenStyle.chromeIcon.stroke}
+      aria-hidden
+    />
   );
 }

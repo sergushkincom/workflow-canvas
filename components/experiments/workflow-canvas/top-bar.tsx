@@ -43,7 +43,7 @@ export function TopBar({
       type="button"
       variant="secondary"
       size="sm"
-      className="h-7 shrink-0 rounded-[6px] px-2.5 text-[12px] font-medium shadow-none"
+      className="focus-ring h-7 shrink-0 rounded-[6px] px-2.5 text-[12px] font-medium shadow-none focus-visible:ring-0"
       style={{ background: color.field, color: color.ink }}
       disabled={runDisabled}
       onClick={active ? onStop : onTestRun}
@@ -65,7 +65,7 @@ export function TopBar({
           Support triage
         </h1>
         <span
-          className="inline-flex h-6 shrink-0 items-center rounded-[6px] px-2 text-[11.5px] font-medium"
+          className="inline-flex h-7 shrink-0 items-center rounded-[6px] px-2 text-[11px] font-medium"
           style={{ background: color.field, color: color.muted }}
         >
           Draft
@@ -85,7 +85,7 @@ export function TopBar({
           runButton
         )}
         <p
-          className="inline-flex h-6 shrink-0 items-center rounded-[6px] px-2 text-[12px] font-medium"
+          className="inline-flex h-7 shrink-0 items-center rounded-[6px] px-2 text-[12px] font-medium"
           style={{ background: color.field, color: color.muted }}
         >
           {runPhase === "done" && totalMs !== undefined

@@ -18,12 +18,12 @@ const WorkflowCanvas = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex h-full flex-col bg-page">
-        <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--line)] bg-surface px-4">
+        <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--line)] bg-surface px-6">
           <div className="flex items-center gap-2">
             <p className="text-[13px] font-semibold leading-tight text-ink">
               Support triage
             </p>
-            <span className="inline-flex h-6 items-center rounded-[6px] bg-field px-2 text-[11.5px] font-medium text-ink-2">
+            <span className="inline-flex h-7 items-center rounded-[6px] bg-field px-2 text-[11px] font-medium text-ink-2">
               Draft
             </span>
           </div>

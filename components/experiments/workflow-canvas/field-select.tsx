@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
 
 import {
   Popover,
@@ -8,45 +9,33 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { accent, color } from "@/lib/experiments/workflow-canvas/tokens";
+import {
+  color,
+  ring,
+  tokenStyle,
+} from "@/lib/experiments/workflow-canvas/tokens";
 
 type MenuItem = { id: string; name: string; tag?: string };
 
 function Chevron() {
   return (
-    <svg
-      width="11"
-      height="11"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+    <ChevronDown
+      size={12}
+      strokeWidth={tokenStyle.chromeIcon.stroke}
       className="shrink-0"
       style={{ color: color.faint }}
       aria-hidden
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
+    />
   );
 }
 
 function CheckIcon() {
   return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+    <Check
+      size={tokenStyle.chromeIcon.size}
+      strokeWidth={tokenStyle.chromeIcon.stroke}
       aria-hidden
-    >
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
+    />
   );
 }
 
@@ -103,7 +92,7 @@ export function SelectChip({
             event.stopPropagation();
           }}
           className={cn(
-            "inline-flex h-[30px] min-w-[5.5rem] max-w-[9rem] shrink-0 items-center justify-between gap-1.5 rounded-[8px] px-2.5 text-left text-[13px] leading-tight outline-none",
+            "focus-ring inline-flex h-7 min-w-[5.5rem] max-w-[9rem] shrink-0 items-center justify-between gap-1.5 rounded-[8px] px-2.5 text-left text-[13px] leading-tight outline-none",
             "disabled:cursor-not-allowed disabled:opacity-40",
           )}
           style={{
@@ -112,17 +101,9 @@ export function SelectChip({
             borderWidth: 1,
             borderStyle: isSet ? "solid" : "dashed",
             borderColor: isSet ? color.border : color.dashed,
-            boxShadow: open ? `0 0 0 2px ${accent}` : undefined,
-          }}
-          onFocus={(event) => {
-            if (event.currentTarget.matches(":focus-visible")) {
-              event.currentTarget.style.boxShadow = `0 0 0 2px ${accent}`;
-            }
-          }}
-          onBlur={(event) => {
-            event.currentTarget.style.boxShadow = open
-              ? `0 0 0 2px ${accent}`
-              : "";
+            boxShadow: open
+              ? `0 0 0 ${ring.width}px ${ring.color}`
+              : undefined,
           }}
         >
           <span className="truncate">{displayValue ?? placeholder}</span>
@@ -136,11 +117,11 @@ export function SelectChip({
         sideOffset={6}
         collisionPadding={12}
         avoidCollisions
-        className="w-56 p-1 data-[state=closed]:animate-none data-[state=open]:animate-none"
+        className="w-56 rounded-[12px] border bg-surface p-1 shadow-raised data-[state=closed]:animate-none data-[state=open]:animate-none"
         style={{
           borderColor: color.border,
           animation: "popover-in 80ms ease-out",
-          boxShadow: `0 8px 24px -12px color-mix(in srgb, ${color.ink} 18%, transparent)`,
+          boxShadow: "var(--shadow-raised)",
         }}
         onClick={(event) => event.stopPropagation()}
       >
@@ -153,7 +134,7 @@ export function SelectChip({
                 type="button"
                 role="option"
                 aria-selected={selected}
-                className="flex h-[30px] w-full items-center gap-2 rounded-[6px] px-2 text-left text-[13px]"
+                className="flex h-7 w-full items-center gap-2 rounded-[6px] px-2 text-left text-[13px]"
                 style={{ color: color.ink }}
                 onMouseEnter={(event) => {
                   event.currentTarget.style.background = color.field;
@@ -218,21 +199,13 @@ export function FieldInput({
       onClick={(event) => event.stopPropagation()}
       onChange={(event) => onChange(event.target.value)}
       inputMode={type === "number" ? "decimal" : "text"}
-      className="h-[30px] min-w-[5.5rem] max-w-[9rem] shrink-0 rounded-[8px] px-2.5 text-[13px] leading-tight outline-none read-only:cursor-default placeholder:text-[color:var(--ink-3)]"
+      className="focus-ring h-7 min-w-[5.5rem] max-w-[9rem] shrink-0 rounded-[8px] px-2.5 text-[13px] leading-tight outline-none read-only:cursor-default placeholder:text-[color:var(--ink-3)]"
       style={{
         background: color.surface,
         color: isSet ? color.ink : color.faint,
         borderWidth: 1,
         borderStyle: isSet ? "solid" : "dashed",
         borderColor: isSet ? color.border : color.dashed,
-      }}
-      onFocus={(event) => {
-        if (event.currentTarget.matches(":focus-visible")) {
-          event.currentTarget.style.boxShadow = `0 0 0 2px ${accent}`;
-        }
-      }}
-      onBlur={(event) => {
-        event.currentTarget.style.boxShadow = "";
       }}
     />
   );

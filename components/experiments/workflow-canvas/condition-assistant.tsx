@@ -5,7 +5,6 @@ import {
   useId,
   useRef,
   useState,
-  type CSSProperties,
   type FormEvent,
   type ReactNode,
 } from "react";
@@ -23,7 +22,12 @@ import {
   type AssistantSuggestion,
   type DraftRow,
 } from "@/lib/experiments/workflow-canvas/assistant";
-import { accent, accentHover, color } from "@/lib/experiments/workflow-canvas/tokens";
+import {
+  accent,
+  accentHover,
+  color,
+  tokenStyle,
+} from "@/lib/experiments/workflow-canvas/tokens";
 import type { ConditionNode, FlowAction } from "@/lib/experiments/workflow-canvas/types";
 
 type ConditionAssistantPanelProps = {
@@ -140,10 +144,18 @@ export function ConditionAssistantPanel({
           Condition assistant
         </h3>
         <HeaderIconButton label="Minimize" onClick={onMinimize}>
-          <Minus size={14} strokeWidth={1.75} aria-hidden />
+          <Minus
+            size={tokenStyle.chromeIcon.size}
+            strokeWidth={tokenStyle.chromeIcon.stroke}
+            aria-hidden
+          />
         </HeaderIconButton>
         <HeaderIconButton label="Close" onClick={onClose}>
-          <X size={14} strokeWidth={1.75} aria-hidden />
+          <X
+            size={tokenStyle.chromeIcon.size}
+            strokeWidth={tokenStyle.chromeIcon.stroke}
+            aria-hidden
+          />
         </HeaderIconButton>
       </div>
 
@@ -159,16 +171,16 @@ export function ConditionAssistantPanel({
             What this checks
           </h4>
           {readBack ? (
-            <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+            <p className="text-[13px] leading-[1.4]" style={{ color: color.ink }}>
               {readBack}
             </p>
           ) : (
-            <p className="text-[13px] leading-snug" style={{ color: color.muted }}>
+            <p className="text-[13px] leading-[1.4]" style={{ color: color.muted }}>
               No rows to read back yet.
             </p>
           )}
           {sampleLine ? (
-            <p className="text-[13px] leading-snug" style={{ color: color.muted }}>
+            <p className="text-[13px] leading-[1.4]" style={{ color: color.muted }}>
               {sampleLine}
             </p>
           ) : null}
@@ -199,19 +211,13 @@ export function ConditionAssistantPanel({
                 }
               }}
               placeholder="Only VIP customers"
-              className="h-[30px] w-full rounded-[8px] px-2.5 text-[13px] leading-tight outline-none placeholder:text-[color:var(--ink-3)]"
+              className="focus-ring h-7 w-full rounded-[8px] px-2.5 text-[13px] leading-tight outline-none placeholder:text-[color:var(--ink-3)]"
               style={{
                 background: color.surface,
                 color: color.ink,
                 borderWidth: 1,
                 borderStyle: "solid",
                 borderColor: color.border,
-              }}
-              onFocus={(event) => {
-                event.currentTarget.style.boxShadow = `0 0 0 2px ${accent}`;
-              }}
-              onBlur={(event) => {
-                event.currentTarget.style.boxShadow = "";
               }}
             />
           </form>
@@ -232,11 +238,11 @@ export function ConditionAssistantPanel({
 
         {match?.kind === "unsure" && !drafts ? (
           <section className="flex flex-col" style={{ gap: 8 }}>
-            <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+            <p className="text-[13px] leading-[1.4]" style={{ color: color.ink }}>
               {match.message}
             </p>
             {match.alreadyMessage ? (
-              <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+              <p className="text-[13px] leading-[1.4]" style={{ color: color.ink }}>
                 {match.alreadyMessage}
               </p>
             ) : null}
@@ -244,7 +250,7 @@ export function ConditionAssistantPanel({
               <button
                 key={choice.label}
                 type="button"
-                className="rounded-[8px] px-2.5 py-2 text-left text-[13px] leading-snug"
+                className="rounded-[8px] px-2.5 py-2 text-left text-[13px] leading-[1.4]"
                 style={{ background: color.field, color: color.ink }}
                 onClick={() => {
                   const rows = uniqueDrafts(node.rows, choice.rows);
@@ -265,18 +271,18 @@ export function ConditionAssistantPanel({
         ) : null}
 
         {match?.kind === "unknown" || match?.kind === "already" ? (
-          <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+          <p className="text-[13px] leading-[1.4]" style={{ color: color.ink }}>
             {match.message}
           </p>
         ) : null}
 
         {match?.kind === "draft" && drafts ? (
           <div className="flex flex-col" style={{ gap: 8 }}>
-            <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+            <p className="text-[13px] leading-[1.4]" style={{ color: color.ink }}>
               {match.message}
             </p>
             {match.alreadyMessage ? (
-              <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+              <p className="text-[13px] leading-[1.4]" style={{ color: color.ink }}>
                 {match.alreadyMessage}
               </p>
             ) : null}
@@ -288,7 +294,7 @@ export function ConditionAssistantPanel({
             {drafts.map((row, index) => (
               <li
                 key={`${row.source}-${row.field}-${index}`}
-                className="rounded-[8px] px-2.5 py-2 text-[13px] leading-snug"
+                className="rounded-[8px] px-2.5 py-2 text-[13px] leading-[1.4]"
                 style={{
                   color: color.ink,
                   border: `1px dashed ${color.dashed}`,
@@ -301,7 +307,7 @@ export function ConditionAssistantPanel({
         ) : null}
 
         {notice && !(drafts && drafts.length > 0) ? (
-          <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+          <p className="text-[13px] leading-[1.4]" style={{ color: color.ink }}>
             {notice}
           </p>
         ) : null}
@@ -312,24 +318,19 @@ export function ConditionAssistantPanel({
           className="flex shrink-0 flex-col border-t"
           style={{ borderColor: color.border, gap: 8, padding: 16 }}
         >
-          <p className="text-[13px] leading-snug" style={{ color: color.muted }}>
+          <p className="text-[13px] leading-[1.4]" style={{ color: color.muted }}>
             {withDrafts}
           </p>
           {notice ? (
-            <p className="text-[13px] leading-snug" style={{ color: color.ink }}>
+            <p className="text-[13px] leading-[1.4]" style={{ color: color.ink }}>
               {notice}
             </p>
           ) : null}
           <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"
-              className="h-8 rounded-[6px] px-3 text-[12px] font-medium text-white outline-none focus-visible:ring-2 focus-visible:ring-offset-0"
-              style={
-                {
-                  background: accent,
-                  ["--tw-ring-color" as string]: accent,
-                } as CSSProperties
-              }
+              className="focus-ring h-8 rounded-[6px] px-3 text-[12px] font-medium text-white outline-none"
+              style={{ background: accent }}
               onMouseEnter={(event) => {
                 event.currentTarget.style.background = accentHover;
               }}
@@ -342,13 +343,8 @@ export function ConditionAssistantPanel({
             </button>
             <button
               type="button"
-              className="h-8 rounded-[6px] px-3 text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-0"
-              style={
-                {
-                  color: color.muted,
-                  ["--tw-ring-color" as string]: accent,
-                } as CSSProperties
-              }
+              className="focus-ring h-8 rounded-[6px] px-3 text-[12px] font-medium outline-none"
+              style={{ color: color.muted }}
               onClick={() => {
                 setPrompt("");
                 setDrafts(null);
@@ -410,7 +406,7 @@ function HeaderIconButton({
     <button
       type="button"
       aria-label={label}
-      className="flex size-6 shrink-0 items-center justify-center rounded-[6px]"
+      className="focus-ring-icon flex size-6 shrink-0 items-center justify-center rounded-[6px] outline-none hover:bg-field"
       style={{ color: color.muted }}
       onClick={(event) => {
         event.stopPropagation();

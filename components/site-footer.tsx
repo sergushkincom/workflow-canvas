@@ -23,7 +23,7 @@ const link =
 /** Who made this and where the code is. One thin row under the app, never over it. */
 export function SiteFooter() {
   return (
-    <footer className="flex h-8 shrink-0 items-center justify-between gap-3 border-t border-[var(--line-strong)] bg-hover-2 px-4 text-[11.5px] text-ink">
+    <footer className="flex h-8 shrink-0 items-center justify-between gap-3 border-t border-[var(--line-strong)] bg-hover-2 px-4 text-[11px] text-ink">
       <p className="truncate max-sm:hidden">MIT licensed · Design prototype</p>
       <nav
         aria-label="About this project"

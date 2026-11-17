@@ -8,7 +8,6 @@ import {
   nodeTypeChip,
 } from "@/lib/experiments/workflow-canvas/node-types";
 import {
-  accent,
   color,
   type TypeTintKey,
 } from "@/lib/experiments/workflow-canvas/tokens";
@@ -71,7 +70,7 @@ export function ActionNodeCard({
               {node.title}
             </span>
             <span
-              className="mt-0.5 block text-[12px] leading-snug"
+              className="mt-0.5 block text-[12px] leading-[1.4]"
               style={{ color: color.muted }}
             >
               {node.subtitle}
@@ -79,7 +78,7 @@ export function ActionNodeCard({
           </span>
         </div>
         <p
-          className="flex items-center gap-1.5 border-t text-[13px] leading-tight"
+          className="flex items-center gap-1.5 border-t text-[12px] leading-[1.4]"
           style={{
             borderColor: color.border,
             color: color.muted,
@@ -89,7 +88,7 @@ export function ActionNodeCard({
         >
           <span
             className="size-1.5 rounded-full"
-            style={{ background: accent }}
+            style={{ background: color.faint }}
             aria-hidden
           />
           Not configured yet
