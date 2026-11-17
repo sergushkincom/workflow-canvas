@@ -13,21 +13,25 @@ import {
 import { color } from "@/lib/experiments/workflow-canvas/tokens";
 
 type TopBarProps = {
+  title: string;
   stepCount: number;
   incompleteCount: number;
   runPhase: RunPhase;
   totalMs?: number;
   onTestRun: () => void;
   onStop: () => void;
+  onOpenTemplates?: () => void;
 };
 
 export function TopBar({
+  title,
   stepCount,
   incompleteCount,
   runPhase,
   totalMs,
   onTestRun,
   onStop,
+  onOpenTemplates,
 }: TopBarProps) {
   const stepLabel = stepCount === 1 ? "1 step" : `${stepCount} steps`;
   const summary =
@@ -59,10 +63,12 @@ export function TopBar({
     >
       <div className="flex min-w-0 items-center gap-2">
         <h1
-          className="truncate text-[13px] font-semibold leading-tight"
+          id="workflow-title"
+          tabIndex={-1}
+          className="truncate text-[13px] font-semibold leading-tight outline-none"
           style={{ color: color.ink }}
         >
-          Support triage
+          {title}
         </h1>
         <span
           className="inline-flex h-6 shrink-0 items-center rounded-[6px] px-2 text-[11.5px] font-medium"
@@ -72,6 +78,19 @@ export function TopBar({
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        {onOpenTemplates ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="h-7 shrink-0 rounded-[6px] px-2.5 text-[12px] font-medium shadow-none"
+            style={{ background: color.field, color: color.ink }}
+            aria-haspopup="dialog"
+            onClick={onOpenTemplates}
+          >
+            Templates
+          </Button>
+        ) : null}
         {runDisabled ? (
           <Tooltip>
             <TooltipTrigger asChild>

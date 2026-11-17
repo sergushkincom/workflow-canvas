@@ -13,7 +13,8 @@ async function pickOption(page: Page, chip: Locator, optionName: string) {
 test("builds a flow, runs it, and stops at 62% until a person decides", async ({
   page,
 }) => {
-  await page.goto("/experiments/workflow-canvas");
+  // The default route is the first-run screen. This test opens the seeded flow.
+  await page.goto("/experiments/workflow-canvas?flow=support-triage");
 
   await expect(
     page.getByRole("heading", { name: "Support triage" }),

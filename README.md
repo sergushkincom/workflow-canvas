@@ -173,6 +173,17 @@ Building it turned up a second moving thing I hadn't counted: the step's timer, 
 
 **Next.** One blocked flow waiting for a person is honest. Forty of them is a queue nobody looks at. That's the next experiment.
 
+## First run
+
+A blank canvas is where a new user stalls: there is nothing to edit, and no
+sense of what a finished workflow looks like. The prototype opens on a home
+screen instead, with the template picker already up. Search, filter by category
+or node, sort, and the one you choose opens on the canvas immediately — ready
+to change, with no preview in between. Start from scratch is a blank canvas
+with the same editor.
+
+![First run: the template picker open over an empty canvas](./preview-first-run.png)
+
 ## Running it
 
 ```bash

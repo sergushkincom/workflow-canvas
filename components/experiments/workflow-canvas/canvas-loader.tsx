@@ -4,49 +4,38 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
-import {
-  isCaptureState,
-  type CaptureState,
-} from "@/lib/experiments/workflow-canvas/capture-snapshots";
+import { isCaptureState } from "@/lib/experiments/workflow-canvas/capture-snapshots";
 
-const WorkflowCanvas = dynamic(
+const WorkflowApp = dynamic(
   () =>
-    import("./canvas").then((module) => ({
-      default: module.WorkflowCanvas,
+    import("./workflow-app").then((module) => ({
+      default: module.WorkflowApp,
     })),
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full flex-col bg-page">
-        <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--line)] bg-surface px-4">
-          <div className="flex items-center gap-2">
-            <p className="text-[13px] font-semibold leading-tight text-ink">
-              Support triage
-            </p>
-            <span className="inline-flex h-6 items-center rounded-[6px] bg-field px-2 text-[11.5px] font-medium text-ink-2">
-              Draft
-            </span>
-          </div>
+      <div className="flex h-full min-h-0 bg-page">
+        <div className="h-full w-[56px] shrink-0 border-r border-[var(--line)] bg-surface lg:w-[232px]" />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="h-14 shrink-0 border-b border-[var(--line)] bg-surface" />
+          <div className="canvas-dots min-h-0 flex-1" />
         </div>
-        <div className="canvas-dots min-h-0 flex-1" />
       </div>
     ),
   },
 );
 
-function CanvasWithCaptureState() {
+function CanvasWithParams() {
   const params = useSearchParams();
   const raw = params.get("state");
-  const captureState: CaptureState | undefined = isCaptureState(raw)
-    ? raw
-    : undefined;
-  return <WorkflowCanvas captureState={captureState} />;
+  const captureState = isCaptureState(raw) ? raw : undefined;
+  return <WorkflowApp captureState={captureState} flowId={params.get("flow")} />;
 }
 
 export function CanvasLoader() {
   return (
     <Suspense fallback={<div className="h-full bg-page" />}>
-      <CanvasWithCaptureState />
+      <CanvasWithParams />
     </Suspense>
   );
 }
