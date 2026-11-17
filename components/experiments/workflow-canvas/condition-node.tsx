@@ -23,7 +23,6 @@ import {
 } from "@/lib/experiments/workflow-canvas/types";
 import type { NodeRunState } from "@/lib/experiments/workflow-canvas/run-machine";
 import {
-  accent,
   color,
   tokenStyle,
   typeTint,
@@ -144,7 +143,7 @@ export function ConditionNodeCard({
           {assistantEnabled && assistantOpen && assistantMinimized ? (
             <button
               type="button"
-              className="ml-auto inline-flex h-6 items-center rounded-[6px] px-2 text-[11.5px] font-medium"
+              className="ml-auto inline-flex h-6 items-center rounded-[6px] px-2 text-[11px] font-medium"
               style={{ background: color.field, color: color.muted }}
               onClick={(event) => {
                 event.stopPropagation();
@@ -160,7 +159,7 @@ export function ConditionNodeCard({
                   ref={sparklesRef}
                   type="button"
                   aria-label="Ask the condition assistant"
-                  className="ml-auto flex size-6 shrink-0 items-center justify-center rounded-[6px]"
+                  className="focus-ring-icon ml-auto flex size-6 shrink-0 items-center justify-center rounded-[6px] outline-none hover:bg-field"
                   style={{ color: color.muted }}
                   onClick={(event) => {
                     event.stopPropagation();
@@ -168,7 +167,11 @@ export function ConditionNodeCard({
                     onAssistantOpen?.();
                   }}
                 >
-                  <Sparkles size={14} strokeWidth={1.75} aria-hidden />
+                  <Sparkles
+                    size={tokenStyle.chromeIcon.size}
+                    strokeWidth={tokenStyle.chromeIcon.stroke}
+                    aria-hidden
+                  />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top">Ask the condition assistant</TooltipContent>
@@ -230,7 +233,7 @@ export function ConditionNodeCard({
 
         {incomplete ? (
           <p
-            className="flex items-center gap-1.5 border-t text-[13px] leading-tight"
+            className="flex items-center gap-1.5 border-t text-[12px] leading-[1.4]"
             style={{
               borderColor: color.border,
               color: color.muted,
@@ -240,7 +243,7 @@ export function ConditionNodeCard({
           >
             <span
               className="size-1.5 rounded-full"
-              style={{ background: accent }}
+              style={{ background: color.faint }}
               aria-hidden
             />
             Incomplete

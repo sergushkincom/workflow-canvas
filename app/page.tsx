@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { accent, color } from "@/lib/experiments/workflow-canvas/tokens";
+import { color } from "@/lib/experiments/workflow-canvas/tokens";
 
 export default function Home() {
   return (
@@ -18,7 +18,7 @@ export default function Home() {
         Interaction problems, built rather than described.
       </h1>
       <p
-        className="mt-3 text-[13px] leading-snug"
+        className="mt-3 text-[13px] leading-[1.4]"
         style={{ color: color.muted }}
       >
         Experiments in AI and enterprise software. Each one answers a single
@@ -29,11 +29,10 @@ export default function Home() {
         <li>
           <Link
             href="/experiments/workflow-canvas"
-            className="block rounded-[14px] border p-4 shadow-card focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="focus-ring-icon block rounded-[12px] border p-4 shadow-card"
             style={{
               borderColor: color.border,
               background: color.surface,
-              outlineColor: accent,
             }}
           >
             <p
@@ -49,7 +48,7 @@ export default function Home() {
               Workflow canvas
             </h2>
             <p
-              className="mt-1 text-[13px] leading-snug"
+              className="mt-1 text-[13px] leading-[1.4]"
               style={{ color: color.muted }}
             >
               How should compound conditions read so the logic a user sees is

@@ -30,9 +30,8 @@ export function AddStepMenu({ onAddCondition }: AddStepMenuProps) {
           aria-label="Add step"
           title="Add step"
           className={cn(
-            "group/add relative flex size-[22px] items-center justify-center rounded-full bg-surface text-ink-2 shadow-btn",
+            "focus-ring-icon group/add relative flex size-[22px] items-center justify-center rounded-full bg-surface text-ink-2 shadow-btn outline-none",
             "hover:bg-field",
-            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]",
           )}
         >
           <span className="relative block size-[10px]" aria-hidden>
@@ -49,14 +48,15 @@ export function AddStepMenu({ onAddCondition }: AddStepMenuProps) {
       <PopoverContent
         align="center"
         side="right"
-        className="w-52 rounded-[10px] border-0 bg-surface p-1 shadow-raised data-[state=closed]:animate-none data-[state=open]:animate-none"
+        className="w-52 rounded-[12px] border bg-surface p-1 shadow-raised data-[state=closed]:animate-none data-[state=open]:animate-none"
         style={{
           animation: "pop-in 180ms cubic-bezier(0.23,1,0.32,1) both",
+          boxShadow: "var(--shadow-raised)",
         }}
       >
         <button
           type="button"
-          className="flex w-full rounded-[6px] px-2 py-1.5 text-left text-[12.5px] font-medium text-ink hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+          className="focus-ring-icon flex w-full rounded-[6px] px-2 py-1.5 text-left text-[13px] leading-[1.4] font-medium text-ink outline-none hover:bg-hover"
           onClick={() => {
             onAddCondition();
             setOpen(false);
@@ -76,7 +76,7 @@ function DisabledItem({ label }: { label: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="flex w-full cursor-not-allowed rounded-[6px] px-2 py-1.5 text-[12.5px] text-ink-3">
+        <span className="flex w-full cursor-not-allowed rounded-[6px] px-2 py-1.5 text-[13px] leading-[1.4] text-ink-3">
           {label}
         </span>
       </TooltipTrigger>

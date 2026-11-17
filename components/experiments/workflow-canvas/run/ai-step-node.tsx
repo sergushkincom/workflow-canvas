@@ -154,7 +154,7 @@ export function AiStepNode({
 
         {streamedText ? (
           <p
-            className="text-[13px] leading-snug"
+            className="text-[13px] leading-[1.4]"
             style={{ color: color.muted, paddingInline: 16, paddingBlock: 12 }}
           >
             {streamedText}

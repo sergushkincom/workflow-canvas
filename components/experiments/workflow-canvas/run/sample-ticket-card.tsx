@@ -6,10 +6,9 @@ import { color, NODE_WIDTH } from "@/lib/experiments/workflow-canvas/tokens";
 export function SampleTicketCard() {
   return (
     <div
-      className="animate-ticket-in mb-0 rounded-[12px] border"
+      className="animate-ticket-in mb-0 rounded-[12px] shadow-card"
       style={{
         width: NODE_WIDTH,
-        borderColor: color.border,
         background: color.surface,
         padding: 16,
       }}
@@ -21,7 +20,7 @@ export function SampleTicketCard() {
         {SAMPLE_TICKET.subject}
       </p>
       <p
-        className="mt-1 text-[12px] leading-snug"
+        className="mt-1 text-[12px] leading-[1.4]"
         style={{ color: color.muted }}
       >
         {SAMPLE_TICKET.channelLabel} · {SAMPLE_TICKET.customerName} ·{" "}
