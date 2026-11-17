@@ -43,7 +43,8 @@ const focusRing =
 
 type TemplatesModalProps = {
   open: boolean;
-  docked: boolean;
+  /** Pixels the sidebar occupies. The scrim starts to the right of it. */
+  sidebarWidth: number;
   onOpenChange: (open: boolean) => void;
   onUseTemplate: (template: WorkflowTemplate) => void;
   onStartBlank: () => void;
@@ -52,7 +53,7 @@ type TemplatesModalProps = {
 
 export function TemplatesModal({
   open,
-  docked,
+  sidebarWidth,
   onOpenChange,
   onUseTemplate,
   onStartBlank,
@@ -123,19 +124,15 @@ export function TemplatesModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        overlayClassName={cn(
-          "bg-[color-mix(in_srgb,var(--ink)_28%,transparent)] [animation:none!important]",
-          docked && "md:left-[232px]",
-        )}
-        className={cn(
-          "flex h-[min(720px,calc(100dvh-2rem))] w-[min(1000px,calc(100vw-2rem))] max-w-none flex-col gap-0 overflow-hidden rounded-2xl border-0 p-0 shadow-none [animation:none!important] sm:max-w-none",
-          docked &&
-            "md:left-[calc(50%+116px)] md:w-[min(1000px,calc(100vw-232px-3rem))]",
-        )}
+        overlayClassName="bg-[color-mix(in_srgb,var(--ink)_28%,transparent)] [animation:none!important]"
+        overlayStyle={{ left: sidebarWidth }}
+        className="flex h-[min(720px,calc(100dvh-2rem))] max-w-none flex-col gap-0 overflow-hidden rounded-2xl border-0 p-0 shadow-none [animation:none!important] sm:max-w-none"
         style={{
           background: color.surface,
           animation: "none",
           opacity: 1,
+          left: `calc(50% + ${sidebarWidth / 2}px)`,
+          width: `min(1000px, calc(100vw - ${sidebarWidth}px - 2rem))`,
           boxShadow:
             "0 2px 4px color-mix(in srgb, var(--ink) 4%, transparent), 0 24px 64px -12px color-mix(in srgb, var(--ink) 28%, transparent)",
         }}

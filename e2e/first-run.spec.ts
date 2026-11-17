@@ -1,4 +1,51 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+
+function sidebar(page: Page) {
+  return page.locator("aside[aria-label='Workflow Builder']");
+}
+
+async function expectSidebar(page: Page, mode: "expanded" | "rail") {
+  const nav = sidebar(page);
+  await expect(nav).toBeVisible();
+  const box = await nav.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.width).toBeGreaterThan(40);
+  expect(box!.height).toBeGreaterThan(300);
+  if (mode === "expanded") {
+    expect(box!.width).toBeGreaterThan(200);
+    await expect(nav).toHaveAttribute("data-sidebar-mode", "expanded");
+    await expect(nav.getByText("Workflow Builder", { exact: true })).toBeVisible();
+  } else {
+    expect(box!.width).toBeLessThan(80);
+    await expect(nav).toHaveAttribute("data-sidebar-mode", "rail");
+    await expect(nav.getByText("Workflow Builder", { exact: true })).toHaveCount(0);
+  }
+}
+
+async function expectNavButtons(page: Page) {
+  const nav = sidebar(page).getByRole("navigation", { name: "Primary" });
+  for (const name of [
+    "Home",
+    "Workflows",
+    "Templates",
+    "Executions",
+    "Credentials",
+    "Settings",
+  ]) {
+    await expect(nav.getByRole("button", { name })).toBeVisible();
+  }
+}
+
+async function expectSidebarNotCovered(page: Page) {
+  const navBox = await sidebar(page).boundingBox();
+  const overlayBox = await page.locator("[data-slot=dialog-overlay]").boundingBox();
+  const dialogBox = await page.getByRole("dialog").boundingBox();
+  expect(navBox).not.toBeNull();
+  expect(overlayBox).not.toBeNull();
+  expect(dialogBox).not.toBeNull();
+  expect(overlayBox!.x).toBeGreaterThanOrEqual(navBox!.x + navBox!.width - 1);
+  expect(dialogBox!.x).toBeGreaterThanOrEqual(navBox!.x + navBox!.width - 1);
+}
 
 test("new user filters templates and edits the one they pick", async ({
   page,
@@ -7,6 +54,8 @@ test("new user filters templates and edits the one they pick", async ({
 
   const dialog = page.getByRole("dialog", { name: "Start with a template" });
   await expect(dialog).toBeVisible();
+  await expectSidebar(page, "expanded");
+  await expectSidebarNotCovered(page);
   await expect(
     dialog.getByRole("searchbox", { name: "Search templates" }),
   ).toBeFocused();
@@ -90,6 +139,8 @@ test("new user filters templates and edits the one they pick", async ({
   await expect(
     page.getByRole("heading", { name: "Triage support tickets" }),
   ).toBeVisible();
+  await expectSidebar(page, "rail");
+  await expectNavButtons(page);
   const value = page.getByRole("spinbutton", { name: "Value" });
   await expect(value).toHaveValue("5000");
   await value.fill("6000");
@@ -136,6 +187,8 @@ test.describe("narrow viewport", () => {
     const dialog = page.getByRole("dialog", { name: "Start with a template" });
     await expect(dialog).toBeVisible();
     await expect(dialog).toBeInViewport();
+    await expectSidebar(page, "rail");
+    await expectSidebarNotCovered(page);
     await dialog.getByRole("searchbox", { name: "Search templates" }).fill("triage");
     await dialog
       .getByRole("radiogroup", { name: "Templates" })
@@ -146,5 +199,36 @@ test.describe("narrow viewport", () => {
       page.getByRole("heading", { name: "Triage support tickets" }),
     ).toBeVisible();
     await expect(page.getByRole("spinbutton", { name: "Value" })).toBeVisible();
+    await expectSidebar(page, "rail");
+    await expectNavButtons(page);
   });
+});
+
+test("sidebar stays visible at desktop, tablet, and phone", async ({ page }) => {
+  const sizes = [
+    { label: "desktop", width: 1440, height: 900, home: "expanded" as const },
+    { label: "tablet", width: 768, height: 1024, home: "rail" as const },
+    { label: "phone", width: 390, height: 844, home: "rail" as const },
+  ];
+
+  for (const size of sizes) {
+    await page.setViewportSize({ width: size.width, height: size.height });
+    await page.goto("/experiments/workflow-canvas");
+    const dialog = page.getByRole("dialog", { name: "Start with a template" });
+    await expect(dialog, size.label).toBeVisible();
+    await expectSidebar(page, size.home);
+    await expectSidebarNotCovered(page);
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expectNavButtons(page);
+
+    await sidebar(page).getByRole("button", { name: "Templates" }).click();
+    await dialog.getByRole("button", { name: "Start from scratch" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Untitled workflow" }),
+    ).toBeVisible();
+    await expectSidebar(page, "rail");
+    await expectNavButtons(page);
+  }
 });

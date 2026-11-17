@@ -2,7 +2,7 @@
 
 import { useState, type RefObject } from "react";
 
-import { AppSidebar, type ShellSection } from "./app-sidebar";
+import type { ShellSection } from "./app-sidebar";
 import { Button } from "@/components/ui/button";
 import { color } from "@/lib/experiments/workflow-canvas/tokens";
 
@@ -29,46 +29,28 @@ const QUIET: Record<
 
 type FirstRunShellProps = {
   section: ShellSection;
-  modalOpen: boolean;
   addStepRef: RefObject<HTMLButtonElement | null>;
-  onSection: (section: ShellSection) => void;
   onOpenTemplates: () => void;
   onStartBlank: () => void;
 };
 
 export function FirstRunShell({
   section,
-  modalOpen,
   addStepRef,
-  onSection,
   onOpenTemplates,
   onStartBlank,
 }: FirstRunShellProps) {
   return (
-    <div className="flex h-full min-h-0 flex-col md:flex-row">
-      <AppSidebar
-        section={section}
-        modalOpen={modalOpen}
-        onSection={onSection}
-        onOpenTemplates={onOpenTemplates}
-      />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {section === "home" ? (
-          <HomeCanvas
-            addStepRef={addStepRef}
-            onStartBlank={onStartBlank}
-          />
-        ) : null}
-        {section === "workflows" ? (
-          <WorkflowsEmpty onOpenTemplates={onOpenTemplates} />
-        ) : null}
-        {section !== "home" && section !== "workflows" ? (
-          <QuietPanel
-            title={QUIET[section].title}
-            body={QUIET[section].body}
-          />
-        ) : null}
-      </div>
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+      {section === "home" ? (
+        <HomeCanvas addStepRef={addStepRef} onStartBlank={onStartBlank} />
+      ) : null}
+      {section === "workflows" ? (
+        <WorkflowsEmpty onOpenTemplates={onOpenTemplates} />
+      ) : null}
+      {section !== "home" && section !== "workflows" ? (
+        <QuietPanel title={QUIET[section].title} body={QUIET[section].body} />
+      ) : null}
     </div>
   );
 }

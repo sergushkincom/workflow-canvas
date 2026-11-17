@@ -1,10 +1,16 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import {
+  AppSidebar,
+  SIDEBAR_COLLAPSE_QUERY,
+  SIDEBAR_RAIL_PX,
+  SIDEBAR_WIDTH_PX,
+  type ShellSection,
+} from "./app-sidebar";
 import { FirstRunShell } from "./first-run-shell";
-import type { ShellSection } from "./app-sidebar";
 import { TemplatesModal } from "./templates-modal";
 import { initialFlowState } from "@/lib/experiments/workflow-canvas/flow-reducer";
 import {
@@ -64,6 +70,25 @@ function sessionFromProps(
   };
 }
 
+function useNarrowShell() {
+  const [narrow, setNarrow] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia(SIDEBAR_COLLAPSE_QUERY).matches,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia(SIDEBAR_COLLAPSE_QUERY);
+    function onChange() {
+      setNarrow(media.matches);
+    }
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  return narrow;
+}
+
 export function WorkflowApp({
   captureState,
   flowId,
@@ -71,23 +96,40 @@ export function WorkflowApp({
   captureState?: CaptureState;
   flowId?: string | null;
 }) {
-  const [editor, setEditor] = useState<EditorSession | null>(() =>
-    sessionFromProps(captureState, flowId),
+  const initialEditor = sessionFromProps(captureState, flowId);
+  const [editor, setEditor] = useState<EditorSession | null>(initialEditor);
+  const [showEditor, setShowEditor] = useState(initialEditor != null);
+  const [frozen, setFrozen] = useState(Boolean(captureState));
+  const [modalOpen, setModalOpen] = useState(initialEditor == null);
+  const [section, setSection] = useState<ShellSection>(
+    initialEditor ? "workflows" : "home",
   );
-  const [modalOpen, setModalOpen] = useState(
-    () => sessionFromProps(captureState, flowId) == null,
-  );
-  const [section, setSection] = useState<ShellSection>("home");
+  const narrow = useNarrowShell();
   const nextKey = useRef(1);
   const addStepRef = useRef<HTMLButtonElement>(null);
   const pendingFocus = useRef<"shell" | "editor" | null>(null);
+  const collapsed = showEditor || narrow;
+  const sidebarWidth = collapsed ? SIDEBAR_RAIL_PX : SIDEBAR_WIDTH_PX;
 
   function openEditor(name: string, flow: Flow) {
     const key = `editor-${nextKey.current}`;
     nextKey.current += 1;
     pendingFocus.current = "editor";
+    setFrozen(false);
     setEditor({ key, name, flow, autoFocusTitle: true });
+    setShowEditor(true);
+    setSection("workflows");
     setModalOpen(false);
+  }
+
+  function onSection(next: ShellSection) {
+    if (next === "workflows" && editor) {
+      setShowEditor(true);
+      setSection("workflows");
+      return;
+    }
+    setShowEditor(false);
+    setSection(next);
   }
 
   function useTemplate(template: WorkflowTemplate) {
@@ -98,38 +140,42 @@ export function WorkflowApp({
     openEditor(BLANK_WORKFLOW_NAME, blankFlow());
   }
 
-  const shell = editor == null;
+  const onHome = !showEditor;
 
   return (
-    <div className="h-full min-h-0">
-      {shell ? (
-        <FirstRunShell
-          section={section}
-          modalOpen={modalOpen}
-          addStepRef={addStepRef}
-          onSection={setSection}
-          onOpenTemplates={() => setModalOpen(true)}
-          onStartBlank={startBlank}
-        />
-      ) : (
-        <WorkflowCanvas
-          key={editor.key}
-          captureState={captureState}
-          initialFlow={captureState ? undefined : editor.flow}
-          title={editor.name}
-          autoFocusTitle={editor.autoFocusTitle}
-          onOpenTemplates={
-            captureState ? undefined : () => setModalOpen(true)
-          }
-        />
-      )}
-      {captureState ? null : (
+    <div className="flex h-full min-h-0">
+      <AppSidebar
+        section={showEditor ? "workflows" : section}
+        collapsed={collapsed}
+        modalOpen={modalOpen}
+        onSection={onSection}
+        onOpenTemplates={() => setModalOpen(true)}
+      />
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+        {showEditor && editor ? (
+          <WorkflowCanvas
+            key={editor.key}
+            captureState={frozen ? captureState : undefined}
+            initialFlow={frozen ? undefined : editor.flow}
+            title={editor.name}
+            autoFocusTitle={editor.autoFocusTitle}
+          />
+        ) : (
+          <FirstRunShell
+            section={section}
+            addStepRef={addStepRef}
+            onOpenTemplates={() => setModalOpen(true)}
+            onStartBlank={startBlank}
+          />
+        )}
+      </div>
+      {frozen ? null : (
         <TemplatesModal
           open={modalOpen}
-          docked={shell}
+          sidebarWidth={sidebarWidth}
           onOpenChange={(open) => {
             if (!open && pendingFocus.current !== "editor") {
-              pendingFocus.current = shell ? "shell" : null;
+              pendingFocus.current = onHome ? "shell" : null;
             }
             setModalOpen(open);
           }}

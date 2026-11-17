@@ -8,10 +8,22 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react";
+import type { ReactElement, ReactNode } from "react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { color } from "@/lib/experiments/workflow-canvas/tokens";
 
 export const SIDEBAR_WIDTH_PX = 232;
+export const SIDEBAR_RAIL_PX = 56;
+
+/** Below this width the home sidebar collapses to the icon rail. */
+export const SIDEBAR_COLLAPSE_QUERY = "(max-width: 1023px)";
 
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]";
@@ -39,6 +51,8 @@ const PRIMARY: NavItem[] = [
 
 type AppSidebarProps = {
   section: ShellSection;
+  /** Icon rail: logo mark and nav icons, labels available to assistive tech and tooltips. */
+  collapsed: boolean;
   modalOpen: boolean;
   onSection: (section: ShellSection) => void;
   onOpenTemplates: () => void;
@@ -79,49 +93,61 @@ function NavIcon({ icon }: { icon: NavItem["icon"] }) {
 
 export function AppSidebar({
   section,
+  collapsed,
   modalOpen,
   onSection,
   onOpenTemplates,
 }: AppSidebarProps) {
   return (
-    <aside
-      className="flex shrink-0 flex-col border-b md:h-full md:w-[232px] md:border-r md:border-b-0"
-      style={{ borderColor: color.border, background: color.surface }}
-      aria-label="Workflow Builder"
-    >
-      <button
-        type="button"
-        className={`flex items-center gap-2.5 rounded-[8px] px-2 py-1 text-left text-[15px] font-semibold md:px-5 md:pt-5 md:pb-5 ${focusRing}`}
-        style={{ color: color.ink }}
-        onClick={() => onSection("home")}
+    <TooltipProvider delayDuration={300}>
+      <aside
+        className="flex h-full shrink-0 flex-col border-r"
+        style={{
+          width: collapsed ? SIDEBAR_RAIL_PX : SIDEBAR_WIDTH_PX,
+          borderColor: color.border,
+          background: color.surface,
+        }}
+        aria-label="Workflow Builder"
+        data-sidebar-mode={collapsed ? "rail" : "expanded"}
       >
-        <span
-          className="grid size-[26px] shrink-0 place-items-center rounded-[8px] text-[var(--surface)]"
-          style={{ background: color.ink }}
+        <RailTip label="Workflow Builder" enabled={collapsed}>
+          <button
+            type="button"
+            className={cn(
+              "flex items-center rounded-[8px] text-left text-[15px] font-semibold",
+              collapsed
+                ? "mx-auto mt-3 size-[34px] justify-center"
+                : "mx-3 mt-4 gap-2.5 px-2 py-1",
+              focusRing,
+            )}
+            style={{ color: color.ink }}
+            aria-label={collapsed ? "Workflow Builder" : undefined}
+            onClick={() => onSection("home")}
+          >
+            <span
+              className="grid size-[26px] shrink-0 place-items-center rounded-[8px] text-[var(--surface)]"
+              style={{ background: color.ink }}
+            >
+              <FlowMark size={14} strokeWidth={2.2} />
+            </span>
+            {collapsed ? null : "Workflow Builder"}
+          </button>
+        </RailTip>
+        <nav
+          aria-label="Primary"
+          className={cn(
+            "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pb-3",
+            collapsed ? "items-center px-0 pt-3" : "px-3 pt-4",
+          )}
         >
-          <FlowMark size={14} strokeWidth={2.2} />
-        </span>
-        Workflow Builder
-      </button>
-      <nav
-        aria-label="Primary"
-        className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-1 md:flex-col md:overflow-visible md:px-3 md:pb-4"
-      >
-        {PRIMARY.map((item) => {
-          const active = item.id !== "templates" && item.id === section;
-          const templates = item.id === "templates";
-          return (
-            <button
+          {PRIMARY.map((item) => (
+            <RailButton
               key={item.id}
-              type="button"
-              className={`flex h-[34px] shrink-0 items-center gap-2.5 rounded-[8px] px-2.5 text-[14px] font-medium hover:bg-[var(--field)] ${focusRing}`}
-              style={{
-                background: active ? color.field : "transparent",
-                color: active ? color.ink : color.muted,
-              }}
-              aria-current={active ? "page" : undefined}
-              aria-haspopup={templates ? "dialog" : undefined}
-              aria-expanded={templates ? modalOpen : undefined}
+              label={item.label}
+              collapsed={collapsed}
+              active={item.id !== "templates" && item.id === section}
+              templates={item.id === "templates"}
+              modalOpen={modalOpen}
               onClick={() => {
                 if (item.id === "templates") {
                   onOpenTemplates();
@@ -131,24 +157,91 @@ export function AppSidebar({
               }}
             >
               <NavIcon icon={item.icon} />
-              {item.label}
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          className={`flex h-[34px] shrink-0 items-center gap-2.5 rounded-[8px] px-2.5 text-[14px] font-medium hover:bg-[var(--field)] md:mt-auto ${focusRing}`}
-          style={{
-            background: section === "settings" ? color.field : "transparent",
-            color: section === "settings" ? color.ink : color.muted,
-          }}
-          aria-current={section === "settings" ? "page" : undefined}
-          onClick={() => onSection("settings")}
-        >
-          <Settings size={16} strokeWidth={1.6} aria-hidden />
-          Settings
-        </button>
-      </nav>
-    </aside>
+            </RailButton>
+          ))}
+          <RailButton
+            label="Settings"
+            collapsed={collapsed}
+            active={section === "settings"}
+            className="mt-auto"
+            onClick={() => onSection("settings")}
+          >
+            <Settings size={16} strokeWidth={1.6} aria-hidden />
+          </RailButton>
+        </nav>
+      </aside>
+    </TooltipProvider>
+  );
+}
+
+function RailButton({
+  label,
+  collapsed,
+  active,
+  templates = false,
+  modalOpen = false,
+  className,
+  onClick,
+  children,
+}: {
+  label: string;
+  collapsed: boolean;
+  active: boolean;
+  templates?: boolean;
+  modalOpen?: boolean;
+  className?: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <RailTip label={label} enabled={collapsed}>
+      <button
+        type="button"
+        className={cn(
+          "flex h-[34px] shrink-0 items-center rounded-[8px] text-[14px] font-medium hover:bg-[var(--field)]",
+          collapsed ? "w-[34px] justify-center" : "gap-2.5 px-2.5",
+          className,
+          focusRing,
+        )}
+        style={{
+          background: active ? color.field : "transparent",
+          color: active ? color.ink : color.muted,
+        }}
+        aria-label={collapsed ? label : undefined}
+        aria-current={active ? "page" : undefined}
+        aria-haspopup={templates ? "dialog" : undefined}
+        aria-expanded={templates ? modalOpen : undefined}
+        onClick={onClick}
+      >
+        {children}
+        {collapsed ? null : label}
+      </button>
+    </RailTip>
+  );
+}
+
+function RailTip({
+  label,
+  enabled,
+  children,
+}: {
+  label: string;
+  enabled: boolean;
+  children: ReactElement;
+}) {
+  if (!enabled) {
+    return children;
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent
+        side="right"
+        sideOffset={8}
+        className="border-0 bg-ink px-2 py-1 text-[12px] text-surface"
+      >
+        {label}
+      </TooltipContent>
+    </Tooltip>
   );
 }
