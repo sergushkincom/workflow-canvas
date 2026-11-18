@@ -1,5 +1,5 @@
 import type { Flow } from "./types";
-import { isActionNode } from "./types";
+import { isActionNode, stepDisplayName } from "./types";
 
 /** Palette id for the only step that picks an account in this prototype. */
 export const SEND_EMAIL_NODE_TYPE = "send-email";
@@ -76,7 +76,7 @@ export function credentialUsages(
       usages.push({
         workflowName: workflow.name,
         stepId: step.id,
-        stepTitle: step.title,
+        stepTitle: stepDisplayName(step),
       });
     }
   }

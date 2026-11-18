@@ -79,7 +79,10 @@ export function configNodeId(action: FlowAction): string | null {
       return action.nodeId;
     case "setTrigger":
       return "trigger";
+    case "setNodeCredential":
+      return action.id;
     default:
+      // renameNode is the visible label. It does not change what the step does.
       return null;
   }
 }
@@ -116,6 +119,7 @@ export function nodeConfigKey(flow: Flow, nodeId: string): string {
       nodeTypeId: node.nodeTypeId,
       title: node.title,
       subtitle: node.subtitle,
+      credentialId: node.credentialId ?? "",
     });
   }
   return JSON.stringify({

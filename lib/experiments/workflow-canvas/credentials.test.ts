@@ -140,5 +140,18 @@ describe("mock credentials", () => {
       describeCredentialUse(usages),
       "Used in Untitled workflow · Send email",
     );
+
+    const renamed = flowReducer(chosen, {
+      type: "renameNode",
+      id: "email",
+      name: "Ping customer",
+    });
+    const namedUsages = credentialUsages("gmail-personal", [
+      { name: "Untitled workflow", flow: renamed.flow },
+    ]);
+    assert.equal(
+      describeCredentialUse(namedUsages),
+      "Used in Untitled workflow · Ping customer",
+    );
   });
 });

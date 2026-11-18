@@ -7,6 +7,8 @@ export type TriggerNode = {
   width: number;
   /** Palette id when the trigger was chosen or set by the build helper. */
   nodeTypeId?: string;
+  /** Custom label. Absent means the node shows `title`. */
+  name?: string;
 };
 
 export type ConditionRow = {
@@ -22,6 +24,8 @@ export type ConditionNode = {
   conjunction: Conjunction;
   rows: ConditionRow[];
   width: number;
+  /** Custom label. Absent means the node shows the condition default. */
+  name?: string;
 };
 
 export type ActionNode = {
@@ -31,6 +35,8 @@ export type ActionNode = {
   title: string;
   subtitle: string;
   width: number;
+  /** Custom label. Absent means the node shows `title`. */
+  name?: string;
   /** Mock account id for steps that send as a connected account. */
   credentialId?: string;
 };
@@ -67,6 +73,7 @@ export type FlowAction =
     }
   | { type: "appendRows"; nodeId: string; rows: ConditionRow[] }
   | { type: "resizeNode"; id: string; width: number }
+  | { type: "renameNode"; id: string; name: string }
   | { type: "setNodeCredential"; id: string; credentialId: string }
   | { type: "insertNode"; id: string; nodeTypeId: string; index: number }
   | { type: "showTriggerHint" }
@@ -89,6 +96,26 @@ export function isActionNode(node: StepNode): node is ActionNode {
 
 export const TRIGGER_DEFAULT_WIDTH = 440;
 export const CONDITION_DEFAULT_WIDTH = 440;
+/** Shown when a condition node has no custom name. */
+export const CONDITION_DEFAULT_NAME = "Condition";
+
+export function triggerDisplayName(node: TriggerNode): string {
+  const custom = node.name?.trim();
+  return custom ? custom : node.title;
+}
+
+export function stepDisplayName(node: StepNode): string {
+  const custom = node.name?.trim();
+  if (custom) {
+    return custom;
+  }
+  return isActionNode(node) ? node.title : CONDITION_DEFAULT_NAME;
+}
+
+export function stepDefaultName(node: StepNode): string {
+  return isActionNode(node) ? node.title : CONDITION_DEFAULT_NAME;
+}
+
 export const NODE_MIN_WIDTH = 280;
 export const NODE_MAX_WIDTH = 1200;
 

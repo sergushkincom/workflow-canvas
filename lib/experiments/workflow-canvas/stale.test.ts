@@ -232,6 +232,43 @@ describe("stale run results", () => {
     assert.equal(changedConfigNodeId(state, trigger), "trigger");
     const chosen = flowReducer(state, trigger);
     assert.equal(changedConfigNodeId(chosen, trigger), null);
+
+    const rename = {
+      type: "renameNode" as const,
+      id: SEED_CONDITION.id,
+      name: "Billing rules",
+    };
+    assert.equal(configNodeId(rename), null);
+    assert.equal(changedConfigNodeId(state, rename), null);
+    assert.equal(
+      nodeConfigKey(state.flow, SEED_CONDITION.id),
+      nodeConfigKey(flowReducer(state, rename).flow, SEED_CONDITION.id),
+    );
+
+    const withEmail = flowReducer(state, {
+      type: "insertNode",
+      id: "email",
+      nodeTypeId: "send-email",
+      index: 1,
+    });
+    const account = {
+      type: "setNodeCredential" as const,
+      id: "email",
+      credentialId: "gmail-work",
+    };
+    assert.equal(changedConfigNodeId(withEmail, account), "email");
+    const connected = flowReducer(withEmail, account);
+    assert.equal(changedConfigNodeId(connected, account), null);
+    const relabel = {
+      type: "renameNode" as const,
+      id: "email",
+      name: "Ping customer",
+    };
+    assert.equal(changedConfigNodeId(connected, relabel), null);
+    assert.equal(
+      nodeConfigKey(connected.flow, "email"),
+      nodeConfigKey(flowReducer(connected, relabel).flow, "email"),
+    );
   });
 
   test("row order is configuration, and adding or removing a step is structural", () => {

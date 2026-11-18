@@ -11,6 +11,18 @@ import {
   type TypeTintKey,
 } from "@/lib/experiments/workflow-canvas/tokens";
 
+function isTextEntry(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  return (
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.tagName === "SELECT" ||
+    target.isContentEditable
+  );
+}
+
 type NodeShellProps = {
   chip: string;
   tintKey: TypeTintKey;
@@ -19,6 +31,7 @@ type NodeShellProps = {
   children: ReactNode;
   onSelect: () => void;
   onResize: (width: number) => void;
+  onStartRename?: () => void;
   className?: string;
   readOnly?: boolean;
   dimmed?: boolean;
@@ -35,6 +48,7 @@ export function NodeShell({
   children,
   onSelect,
   onResize,
+  onStartRename,
   className,
   readOnly = false,
   dimmed = false,
@@ -79,6 +93,7 @@ export function NodeShell({
           role="option"
           aria-selected={selected}
           aria-disabled={readOnly || dimmed}
+          aria-keyshortcuts={onStartRename ? "F2" : undefined}
           tabIndex={readOnly || dimmed ? -1 : 0}
           onClick={(event) => {
             event.stopPropagation();
@@ -88,6 +103,18 @@ export function NodeShell({
           }}
           onKeyDown={(event) => {
             if (readOnly || dimmed) {
+              return;
+            }
+            if (
+              event.key === "F2" &&
+              !event.repeat &&
+              onStartRename &&
+              !isTextEntry(event.target)
+            ) {
+              event.preventDefault();
+              event.stopPropagation();
+              onSelect();
+              onStartRename();
               return;
             }
             if (event.key === "Enter" || event.key === " ") {

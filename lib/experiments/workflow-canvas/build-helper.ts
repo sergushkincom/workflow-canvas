@@ -10,6 +10,7 @@ import {
   CONDITION_DEFAULT_WIDTH,
   isActionNode,
   isConditionNode,
+  stepDisplayName,
   type Conjunction,
   type Flow,
 } from "./types";
@@ -222,7 +223,7 @@ function stepLabel(flow: Flow, index: number): string {
   if (!step) {
     return "the next step";
   }
-  return isActionNode(step) ? step.title : "Condition";
+  return stepDisplayName(step);
 }
 
 export function proposeIntent(
@@ -338,12 +339,14 @@ export function applyProposal(
 
   for (const change of proposal.changes) {
     if (change.kind === "set-trigger") {
-      next.trigger = {
+      const trigger = {
         ...next.trigger,
         title: change.title,
         description: change.description,
         nodeTypeId: change.nodeTypeId,
       };
+      delete trigger.name;
+      next.trigger = trigger;
       highlightedIds.push(next.trigger.id);
       continue;
     }

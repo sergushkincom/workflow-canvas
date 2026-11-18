@@ -18,6 +18,7 @@ import {
   clampNodeWidth,
   isActionNode,
   isConditionNode,
+  stepDefaultName,
 } from "./types";
 
 function emptyRow(id: string): ConditionRow {
@@ -45,6 +46,71 @@ function mapNode(
       steps: state.flow.steps.map((node) =>
         node.id === nodeId && isConditionNode(node) ? updater(node) : node,
       ),
+    },
+  };
+}
+
+/** Empty, whitespace, or the node's default label clears a custom name. */
+function resolveCustomNodeName(
+  raw: string,
+  defaultName: string,
+): string | undefined {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed === defaultName) {
+    return undefined;
+  }
+  return trimmed;
+}
+
+function withCustomName<T extends { name?: string }>(
+  node: T,
+  name: string | undefined,
+): T {
+  const next = { ...node };
+  if (name) {
+    next.name = name;
+  } else {
+    delete next.name;
+  }
+  return next;
+}
+
+function sameCustomName(current: string | undefined, next: string | undefined) {
+  return (current || undefined) === next;
+}
+
+function renameTrigger(state: FlowState, raw: string): FlowState {
+  const current = state.flow.trigger;
+  const name = resolveCustomNodeName(raw, current.title);
+  if (sameCustomName(current.name, name)) {
+    return state;
+  }
+  return {
+    ...state,
+    flow: {
+      ...state.flow,
+      trigger: withCustomName(current, name),
+    },
+  };
+}
+
+function renameStep(state: FlowState, id: string, raw: string): FlowState {
+  const index = state.flow.steps.findIndex((node) => node.id === id);
+  const node = index < 0 ? undefined : state.flow.steps[index];
+  if (!node) {
+    return state;
+  }
+  const name = resolveCustomNodeName(raw, stepDefaultName(node));
+  if (sameCustomName(node.name, name)) {
+    return state;
+  }
+  const steps = state.flow.steps.slice();
+  steps[index] = withCustomName(node, name);
+  return {
+    ...state,
+    flow: {
+      ...state.flow,
+      steps,
     },
   };
 }
@@ -234,6 +300,10 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
         },
       };
     }
+    case "renameNode":
+      return action.id === "trigger"
+        ? renameTrigger(state, action.name)
+        : renameStep(state, action.id, action.name);
     case "insertNode": {
       const definition = getNodeType(action.nodeTypeId);
       if (!definition || state.flow.steps.some((node) => node.id === action.id)) {
@@ -286,7 +356,7 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
         flow: {
           ...state.flow,
           trigger: {
-            ...current,
+            ...withCustomName(current, undefined),
             nodeTypeId: action.nodeTypeId,
             title: action.title,
             description: action.description,
