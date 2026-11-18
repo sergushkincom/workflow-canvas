@@ -10,6 +10,7 @@ import {
   CLASSIFY_STEP_ID,
   formatClockTime,
   type NodeRunState,
+  type StaleReason,
 } from "@/lib/experiments/workflow-canvas/run-machine";
 import { classifyStreamDurationMs } from "@/lib/experiments/workflow-canvas/run-machine";
 import { STILL_AFTER_MS } from "@/lib/experiments/workflow-canvas/run-timings";
@@ -27,6 +28,9 @@ type AiStepNodeProps = {
   output?: string;
   elapsedMs?: number;
   startedAt?: number | null;
+  staleReason?: StaleReason;
+  onRunAgain?: () => void;
+  runAgainDisabled?: boolean;
   onConfirm: (label: DecisionLabel, elapsedMs: number) => void;
   onEscalate: (elapsedMs: number) => void;
 };
@@ -57,6 +61,9 @@ export function AiStepNode({
   output,
   elapsedMs,
   startedAt = null,
+  staleReason,
+  onRunAgain,
+  runAgainDisabled = false,
   onConfirm,
   onEscalate,
 }: AiStepNodeProps) {
@@ -190,6 +197,9 @@ export function AiStepNode({
           ticking={ticking}
           startedAt={startedAt}
           waitingSince={still && stillWait ? stillWait.since : null}
+          staleReason={staleReason}
+          onRunAgain={onRunAgain}
+          runAgainDisabled={runAgainDisabled}
         />
       </NodeShell>
       <span className="sr-only" data-step-id={CLASSIFY_STEP_ID} />

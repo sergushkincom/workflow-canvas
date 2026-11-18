@@ -75,7 +75,15 @@ import {
   triggerOutput,
   type Run,
   type RunAction,
+  type StaleReason,
 } from "@/lib/experiments/workflow-canvas/run-machine";
+import {
+  STALE_HINT,
+  changedConfigNodeId,
+  hasStaleResults,
+  humanizeIssue,
+  isStructuralEdit,
+} from "@/lib/experiments/workflow-canvas/stale";
 import {
   captureRunSnapshot,
   type CaptureState,
@@ -591,19 +599,39 @@ export function WorkflowCanvas({
     setStartedAt({});
   }
 
-  function safeEdit(action: FlowAction) {
+  function startRun() {
+    if (incomplete > 0) {
+      return;
+    }
+    closeAssistant();
+    setHelperOpen(false);
+    setPickerOpen(false);
+    setStartedAt({});
+    startedAtRef.current = {};
+    dispatchRun({ type: "start", flow: state.flow });
+  }
+
+  function commitEdit(action: FlowAction) {
     if (editingLocked) {
       return;
     }
-    // Don't clear a completed run on mere selection / canvas click —
-    // Confirm unmounts the decision panel and the same click can land on
-    // the canvas underneath. Only real edits reset the run.
-    const mutatesFlow =
-      action.type !== "select" &&
-      action.type !== "showTriggerHint" &&
-      action.type !== "clearTriggerHint";
-    if (run.phase === "done" && mutatesFlow) {
-      stopRun();
+    // Selection and the trigger hint stay put so a click that lands on the
+    // canvas after Confirm doesn't throw the result away. A configuration
+    // edit keeps the last output and marks it stale. Adding or removing a
+    // step changes the graph, so that still clears the run.
+    if (run.phase === "done") {
+      if (isStructuralEdit(action)) {
+        stopRun();
+      } else {
+        const editedId = changedConfigNodeId(state, action);
+        if (editedId) {
+          dispatchRun({
+            type: "markConfigStale",
+            id: editedId,
+            orderedIds: orderedRunIds(state.flow),
+          });
+        }
+      }
     }
     dispatch(action);
   }
@@ -612,11 +640,8 @@ export function WorkflowCanvas({
     if (editingLocked) {
       return;
     }
-    if (run.phase === "done") {
-      stopRun();
-    }
     const id = crypto.randomUUID();
-    dispatch({
+    commitEdit({
       type: "addConditionNode",
       id,
       rowId: crypto.randomUUID(),
@@ -635,7 +660,7 @@ export function WorkflowCanvas({
     }
     setNotice(null);
     const id = crypto.randomUUID();
-    safeEdit({ type: "insertNode", id, nodeTypeId, index });
+    commitEdit({ type: "insertNode", id, nodeTypeId, index });
     setEnteringId(id);
     recentNodes.record(nodeTypeId);
   }
@@ -679,19 +704,35 @@ export function WorkflowCanvas({
     if (editingLocked) {
       return;
     }
-    if (run.phase === "done") {
-      stopRun();
-    }
     const { active, over } = event;
     if (!over || active.id === over.id) {
       return;
     }
-    dispatch({
+    commitEdit({
       type: "reorderRows",
       nodeId,
       activeId: String(active.id),
       overId: String(over.id),
     });
+  }
+
+  const resultsStale = run.phase === "done" && hasStaleResults(run.stale);
+  const staleNote = resultsStale ? humanizeIssue(STALE_HINT) : undefined;
+
+  function staleFooter(id: string): {
+    staleReason?: StaleReason;
+    onRunAgain?: () => void;
+    runAgainDisabled?: boolean;
+  } {
+    const staleReason = run.stale[id];
+    if (!staleReason) {
+      return {};
+    }
+    return {
+      staleReason,
+      onRunAgain: startRun,
+      runAgainDisabled: incomplete > 0,
+    };
   }
 
   const classifyState = run.nodeStates[CLASSIFY_STEP_ID];
@@ -747,17 +788,8 @@ export function WorkflowCanvas({
           incompleteCount={incomplete}
           runPhase={run.phase}
           totalMs={run.totalMs}
-          onTestRun={() => {
-            if (incomplete > 0) {
-              return;
-            }
-            closeAssistant();
-            setHelperOpen(false);
-            setPickerOpen(false);
-            setStartedAt({});
-            startedAtRef.current = {};
-            dispatchRun({ type: "start", flow: state.flow });
-          }}
+          resultsStale={resultsStale}
+          onTestRun={startRun}
           onStop={stopRun}
         />
         <div className="relative min-h-0 min-w-0 flex-1">
@@ -769,7 +801,7 @@ export function WorkflowCanvas({
               return;
             }
             if (event.target === event.currentTarget) {
-              safeEdit({ type: "select", id: null });
+              commitEdit({ type: "select", id: null });
             }
           }}
         >
@@ -790,7 +822,7 @@ export function WorkflowCanvas({
                 return;
               }
               if (event.target === event.currentTarget) {
-                safeEdit({ type: "select", id: null });
+                commitEdit({ type: "select", id: null });
               }
             }}
           >
@@ -804,14 +836,15 @@ export function WorkflowCanvas({
               node={state.flow.trigger}
               selected={state.selectedId === "trigger"}
               hintVisible={state.triggerHintVisible}
-              onSelect={() => safeEdit({ type: "select", id: "trigger" })}
-              dispatch={safeEdit}
+              onSelect={() => commitEdit({ type: "select", id: "trigger" })}
+              dispatch={commitEdit}
               readOnly={editingLocked}
               runState={run.nodeStates.trigger}
               output={run.outputs.trigger}
               elapsedMs={run.elapsed.trigger}
               startedAt={startedAt.trigger ?? null}
               runDurationMs={TRIGGER_MS}
+              {...staleFooter("trigger")}
               highlighted={highlightIds.includes(state.flow.trigger.id)}
               triggerPickerOpen={pickerOpen}
               onChooseTrigger={
@@ -853,9 +886,9 @@ export function WorkflowCanvas({
                         entering={enteringId === node.id}
                         exiting={exitingId === node.id}
                         onSelect={() =>
-                          safeEdit({ type: "select", id: node.id })
+                          commitEdit({ type: "select", id: node.id })
                         }
-                        dispatch={safeEdit}
+                        dispatch={commitEdit}
                         readOnly={editingLocked}
                         hideEditChrome={hideEditChrome}
                         runState={run.nodeStates[node.id]}
@@ -863,6 +896,7 @@ export function WorkflowCanvas({
                         elapsedMs={run.elapsed[node.id]}
                         startedAt={startedAt[node.id] ?? null}
                         runDurationMs={CONDITION_MS}
+                        {...staleFooter(node.id)}
                         assistantEnabled={assistantEnabled}
                         assistantOpen={assistantId === node.id}
                         assistantMinimized={
@@ -892,9 +926,9 @@ export function WorkflowCanvas({
                       entering={enteringId === node.id}
                       exiting={exitingId === node.id}
                       onSelect={() =>
-                        safeEdit({ type: "select", id: node.id })
+                        commitEdit({ type: "select", id: node.id })
                       }
-                      dispatch={safeEdit}
+                      dispatch={commitEdit}
                       readOnly={editingLocked}
                       highlighted={highlightIds.includes(node.id)}
                     />
@@ -937,6 +971,7 @@ export function WorkflowCanvas({
                   output={run.outputs[CLASSIFY_STEP_ID]}
                   elapsedMs={run.elapsed[CLASSIFY_STEP_ID]}
                   startedAt={startedAt[CLASSIFY_STEP_ID] ?? null}
+                  {...staleFooter(CLASSIFY_STEP_ID)}
                   onConfirm={(label: DecisionLabel, elapsedMs: number) =>
                     dispatchRun({ type: "confirm", label, elapsedMs })
                   }
@@ -949,7 +984,7 @@ export function WorkflowCanvas({
 
             {run.phase === "done" && run.resultText ? (
               <div ref={resultRef}>
-                <ResultCard text={run.resultText} />
+                <ResultCard text={run.resultText} note={staleNote} />
               </div>
             ) : null}
 
@@ -976,7 +1011,7 @@ export function WorkflowCanvas({
                     undoRef.current = result.undoFlow;
                     setHighlightIds(result.highlightedIds);
                     setChangeSummary(result.summary);
-                    safeEdit({ type: "replaceFlow", flow: result.flow });
+                    commitEdit({ type: "replaceFlow", flow: result.flow });
                   }}
                   onClose={() => setHelperOpen(false)}
                 />
@@ -991,7 +1026,7 @@ export function WorkflowCanvas({
                   if (!definition || editingLocked) {
                     return;
                   }
-                  safeEdit({
+                  commitEdit({
                     type: "setTrigger",
                     nodeTypeId: definition.id,
                     title: definition.title,
@@ -1028,7 +1063,7 @@ export function WorkflowCanvas({
                   setHighlightIds([]);
                   setChangeSummary(null);
                   session.record({ type: "undo" });
-                  safeEdit({ type: "replaceFlow", flow: previous });
+                  commitEdit({ type: "replaceFlow", flow: previous });
                 }}
                 onDismiss={() => {
                   undoRef.current = null;
