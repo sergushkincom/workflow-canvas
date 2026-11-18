@@ -9,6 +9,8 @@ then a Test run against one sample ticket. The AI step reaches 62% confidence, s
 what it is unsure about, and waits for a person — it doesn't count down or auto-confirm.
 [Live demo →](https://denys-workflow-canvas.vercel.app/experiments/workflow-canvas)
 
+![Demo, 13 s loop: a test run reaches the AI step, which stops at 62% confidence, says why, and waits until a person confirms Billing dispute](docs/demo.webp)
+
 **The question:** what does an interface look like when a system is honest about
 not knowing, and hands the decision back to a person?
 

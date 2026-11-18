@@ -11,10 +11,24 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const description =
+  "What an interface looks like when a system is honest about not knowing.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://denys-workflow-canvas.vercel.app"),
   title: "Workflow canvas",
-  description:
-    "What an interface looks like when a system is honest about not knowing.",
+  description,
+  openGraph: {
+    title: "Workflow canvas",
+    description,
+    type: "website",
+    url: "/experiments/workflow-canvas",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Workflow canvas",
+    description,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
