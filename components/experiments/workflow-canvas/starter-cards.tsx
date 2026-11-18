@@ -56,14 +56,14 @@ export function StarterCards({
               })}
             </span>
             <span
-              className="text-[13.5px] leading-5 font-semibold"
+              className="text-[13px] leading-5 font-semibold"
               style={{ color: color.ink }}
             >
               {card.label}
             </span>
             <span
               id={descriptionId}
-              className="text-[12px] leading-snug"
+              className="text-[12px] leading-[1.4]"
               style={{ color: color.muted }}
             >
               {template.description}

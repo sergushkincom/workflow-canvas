@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 
 import { accent, accentHover, color } from "@/lib/experiments/workflow-canvas/tokens";
 import { cn } from "@/lib/utils";
@@ -47,7 +47,7 @@ export function DecisionPanel({ onConfirm, onEscalate }: DecisionPanelProps) {
       </div>
 
       <p
-        className="text-[13px] leading-snug"
+        className="text-[13px] leading-[1.4]"
         style={{ color: color.muted }}
       >
         I can route this to Billing. But two other tickets from this customer
@@ -92,13 +92,8 @@ export function DecisionPanel({ onConfirm, onEscalate }: DecisionPanelProps) {
         <button
           id="confirm-and-continue"
           type="button"
-          className="h-8 rounded-[6px] px-3 text-[12px] font-medium text-white outline-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-offset-0"
-          style={
-            {
-              background: accent,
-              ["--tw-ring-color" as string]: accent,
-            } as CSSProperties
-          }
+          className="focus-ring h-8 rounded-[6px] px-3 text-[12px] font-medium text-white outline-none"
+          style={{ background: accent }}
           onMouseEnter={(event) => {
             event.currentTarget.style.background = accentHover;
           }}
@@ -115,13 +110,8 @@ export function DecisionPanel({ onConfirm, onEscalate }: DecisionPanelProps) {
         </button>
         <button
           type="button"
-          className="h-8 rounded-[6px] bg-transparent px-3 text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-offset-0"
-          style={
-            {
-              color: color.muted,
-              ["--tw-ring-color" as string]: accent,
-            } as CSSProperties
-          }
+          className="focus-ring h-8 rounded-[6px] bg-transparent px-3 text-[12px] font-medium outline-none"
+          style={{ color: color.muted }}
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();

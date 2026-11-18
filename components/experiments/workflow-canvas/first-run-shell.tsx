@@ -225,7 +225,7 @@ function HomeCanvas({
           </div>
           <p
             id="build-helper-blurb"
-            className="max-w-md text-center text-[13px] leading-snug"
+            className="max-w-md text-center text-[13px] leading-[1.4]"
             style={{ color: color.muted }}
           >
             {BUILD_HELPER_DESCRIPTION}
@@ -287,7 +287,7 @@ function WorkflowsEmpty({
       </header>
       <div className="canvas-dots flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
         <p
-          className="max-w-sm text-[13px] leading-snug"
+          className="max-w-sm text-[13px] leading-[1.4]"
           style={{ color: color.muted }}
         >
           No workflows yet. Pick a template or start from scratch.
@@ -317,7 +317,7 @@ function QuietPanel({ title, body }: { title: string; body: string }) {
       </header>
       <div className="canvas-dots flex flex-1 items-center justify-center px-6">
         <p
-          className="max-w-sm text-center text-[13px] leading-snug"
+          className="max-w-sm text-center text-[13px] leading-[1.4]"
           style={{ color: color.muted }}
         >
           {body}

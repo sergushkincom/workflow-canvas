@@ -57,7 +57,7 @@ export function RunNodeFooter({
     >
       {output ? (
         <p
-          className="min-w-0 text-[11px] leading-snug"
+          className="min-w-0 text-[11px] leading-[1.4]"
           style={{ color: color.muted }}
         >
           {output}

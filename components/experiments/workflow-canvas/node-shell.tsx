@@ -96,25 +96,11 @@ export function NodeShell({
             }
           }}
           className={cn(
-            "relative w-full overflow-hidden rounded-[12px] text-left outline-none transition-shadow duration-150",
+            "node-card relative w-full overflow-hidden rounded-[12px] text-left outline-none transition-shadow duration-150",
             selected ? "" : "shadow-card hover:shadow-raised",
           )}
-          style={{
-            background: color.surface,
-            boxShadow: selected
-              ? `0 0 0 1.5px ${accent}, 0 2px 10px color-mix(in srgb, ${color.ink} 4.5%, transparent)`
-              : undefined,
-          }}
-          onFocus={(event) => {
-            if (event.currentTarget.matches(":focus-visible")) {
-              event.currentTarget.style.boxShadow = `0 0 0 1.5px ${accent}`;
-            }
-          }}
-          onBlur={(event) => {
-            event.currentTarget.style.boxShadow = selected
-              ? `0 0 0 1.5px ${accent}, 0 2px 10px color-mix(in srgb, ${color.ink} 4.5%, transparent)`
-              : "";
-          }}
+          data-selected={selected || undefined}
+          style={{ background: color.surface }}
         >
           {children}
           {running ? (

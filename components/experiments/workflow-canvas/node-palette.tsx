@@ -110,7 +110,7 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
                 <button
                   type="button"
                   aria-label={`Expand node palette, ${group.label}`}
-                  className="flex size-6 items-center justify-center rounded-[6px] hover:bg-field focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+                  className="focus-ring-icon flex size-6 items-center justify-center rounded-[6px] outline-none hover:bg-field"
                   style={{ color: typeTint[group.tint].ink }}
                   onClick={() => setCollapsed(false)}
                 >
@@ -140,7 +140,7 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
               <button
                 type="button"
                 aria-label="Collapse node palette"
-                className="flex size-6 shrink-0 items-center justify-center rounded-[6px] hover:bg-field focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+                className="focus-ring-icon flex size-6 shrink-0 items-center justify-center rounded-[6px] outline-none hover:bg-field"
                 style={{ color: color.faint }}
                 onClick={() => setCollapsed(true)}
               >
@@ -148,7 +148,7 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
               </button>
             </div>
             <p
-              className="mt-1 text-[12px] leading-snug"
+              className="mt-1 text-[12px] leading-[1.4]"
               style={{ color: color.muted }}
             >
               Drag onto the flow, or click to add.
@@ -169,7 +169,7 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
                 placeholder="Search nodes"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="h-[30px] w-full rounded-[8px] pr-2.5 pl-8 text-[13px] leading-tight outline-none placeholder:text-ink-3 focus:outline-solid focus:outline-2 focus:outline-offset-0 focus:outline-[color:var(--accent)]"
+                className="focus-ring-field h-7 w-full rounded-[8px] pr-2.5 pl-8 text-[13px] leading-tight outline-none placeholder:text-ink-3"
                 style={{
                   background: color.field,
                   color: color.ink,
@@ -181,7 +181,7 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
           {notice ? (
             <p
               role="status"
-              className="px-3 pb-2 text-[13px] leading-snug"
+              className="px-3 pb-2 text-[13px] leading-[1.4]"
               style={{ color: color.muted }}
             >
               {notice}
@@ -191,7 +191,7 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
             {groups.length === 0 ? (
               <p
                 role="status"
-                className="px-1 text-[13px] leading-snug"
+                className="px-1 text-[13px] leading-[1.4]"
                 style={{ color: color.muted }}
               >
                 No node matches that.
@@ -201,7 +201,7 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
                 {groups.map((group) => (
                   <section key={group.id} aria-label={group.label}>
                     <h3
-                      className="text-[11.5px] font-medium leading-tight"
+                      className="text-[11px] font-medium leading-tight"
                       style={{ color: color.muted, paddingBottom: 8 }}
                     >
                       {group.label}
@@ -248,8 +248,7 @@ function PaletteCard({
       ref={setNodeRef}
       type="button"
       className={cn(
-        "group/card relative flex w-full items-center rounded-[10px] bg-surface text-left hover:bg-field",
-        "outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]",
+        "focus-ring-icon group/card relative flex w-full items-center rounded-[12px] bg-surface text-left outline-none hover:bg-field",
         isDragging && "opacity-40",
       )}
       style={{
@@ -271,7 +270,7 @@ function PaletteCard({
 export function PaletteCardPreview({ nodeType }: { nodeType: NodeTypeDef }) {
   return (
     <div
-      className="group/card relative flex rotate-2 items-center rounded-[10px] bg-surface shadow-raised"
+      className="group/card relative flex rotate-2 items-center rounded-[12px] bg-surface shadow-raised"
       style={{
         width: 256,
         gap: 10,
@@ -298,7 +297,7 @@ function PaletteCardFace({ nodeType }: { nodeType: NodeTypeDef }) {
           {nodeType.title}
         </span>
         <span
-          className="mt-0.5 block truncate text-[12px] leading-tight"
+          className="mt-0.5 block truncate text-[12px] leading-[1.4]"
           style={{ color: color.muted }}
         >
           {nodeType.subtitle}

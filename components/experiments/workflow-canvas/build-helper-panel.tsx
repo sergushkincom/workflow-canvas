@@ -149,7 +149,7 @@ export function BuildHelperPanel({
             {BUILD_HELPER_LABEL}
           </h2>
           <p
-            className="mt-1 text-[12px] leading-snug"
+            className="mt-1 text-[12px] leading-[1.4]"
             style={{ color: color.muted }}
           >
             {BUILD_HELPER_DESCRIPTION}
@@ -172,7 +172,7 @@ export function BuildHelperPanel({
             <button
               ref={index === 0 ? firstIntentRef : undefined}
               type="button"
-              className={`w-full rounded-[8px] px-2.5 py-2 text-left text-[13px] font-medium leading-snug hover:bg-field ${focusRing}`}
+              className={`w-full rounded-[8px] px-2.5 py-2 text-left text-[13px] font-medium leading-[1.4] hover:bg-field ${focusRing}`}
               style={{
                 color: color.ink,
                 background: color.field,
@@ -186,7 +186,7 @@ export function BuildHelperPanel({
       </ul>
 
       {proposal?.note ? (
-        <p className="text-[13px] leading-snug" style={{ color: color.muted }}>
+        <p className="text-[13px] leading-[1.4]" style={{ color: color.muted }}>
           {proposal.note}
         </p>
       ) : null}
@@ -195,7 +195,7 @@ export function BuildHelperPanel({
         <div
           role="region"
           aria-label="Review changes"
-          className="flex flex-col gap-3 rounded-[10px] p-3"
+          className="flex flex-col gap-3 rounded-[8px] p-3"
           style={{
             background: color.canvas,
             border: `1px solid ${color.border}`,
@@ -211,7 +211,7 @@ export function BuildHelperPanel({
             {proposal.changes.map((change) => (
               <li
                 key={change.line}
-                className="text-[13px] leading-snug"
+                className="text-[13px] leading-[1.4]"
                 style={{ color: color.ink }}
               >
                 {change.line}
@@ -224,7 +224,7 @@ export function BuildHelperPanel({
               type="button"
               data-default-permission={DEFAULT_APPLY_PERMISSION}
               aria-pressed="true"
-              className={`h-8 rounded-[8px] px-2.5 text-[12.5px] font-medium text-[var(--surface)] ${focusRing}`}
+              className={`h-8 rounded-[8px] px-2.5 text-[12px] font-medium text-[var(--surface)] ${focusRing}`}
               style={{ background: "var(--accent)" }}
               onClick={() => approve("once")}
             >
@@ -233,7 +233,7 @@ export function BuildHelperPanel({
             <button
               type="button"
               aria-pressed="false"
-              className={`h-8 rounded-[8px] border px-2.5 text-[12.5px] font-medium ${focusRing}`}
+              className={`h-8 rounded-[8px] border px-2.5 text-[12px] font-medium ${focusRing}`}
               style={{
                 borderColor: color.border,
                 background: color.surface,
@@ -245,7 +245,7 @@ export function BuildHelperPanel({
             </button>
             <button
               type="button"
-              className={`h-8 rounded-[8px] px-2.5 text-[12.5px] font-medium ${focusRing}`}
+              className={`h-8 rounded-[8px] px-2.5 text-[12px] font-medium ${focusRing}`}
               style={{ color: color.muted }}
               onClick={cancel}
             >
@@ -279,7 +279,7 @@ export function ChangeSummary({
       }}
     >
       <p
-        className="min-w-0 flex-1 text-[13px] leading-snug"
+        className="min-w-0 flex-1 text-[13px] leading-[1.4]"
         style={{ color: color.ink }}
       >
         {summary}
@@ -287,7 +287,7 @@ export function ChangeSummary({
       <div className="flex shrink-0 gap-2">
         <button
           type="button"
-          className={`h-8 rounded-[8px] px-2.5 text-[12.5px] font-medium text-[var(--surface)] ${focusRing}`}
+          className={`h-8 rounded-[8px] px-2.5 text-[12px] font-medium text-[var(--surface)] ${focusRing}`}
           style={{ background: "var(--accent)" }}
           onClick={onUndo}
         >
@@ -295,7 +295,7 @@ export function ChangeSummary({
         </button>
         <button
           type="button"
-          className={`h-8 rounded-[8px] px-2.5 text-[12.5px] font-medium ${focusRing}`}
+          className={`h-8 rounded-[8px] px-2.5 text-[12px] font-medium ${focusRing}`}
           style={{ color: color.ink, background: color.field }}
           aria-label="Dismiss change summary"
           onClick={onDismiss}

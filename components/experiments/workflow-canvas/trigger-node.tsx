@@ -89,13 +89,13 @@ export function TriggerNodeCard({
           </span>
           <span className="min-w-0 text-left">
             <span
-              className="block truncate text-[13px] font-semibold"
+              className="block truncate text-[13px] font-semibold leading-tight"
               style={{ color: color.ink }}
             >
               {node.title}
             </span>
             <span
-              className="mt-0.5 block text-[12px] leading-snug"
+              className="mt-0.5 block text-[12px] leading-[1.4]"
               style={{ color: color.muted }}
             >
               {node.description}
@@ -115,7 +115,7 @@ export function TriggerNodeCard({
           >
             <button
               type="button"
-              className="rounded-[6px] px-2 py-1 text-[12.5px] font-medium hover:bg-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+              className="rounded-[6px] px-2 py-1 text-[12px] font-medium hover:bg-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
               style={{ color: color.ink, background: color.field }}
               aria-haspopup="dialog"
               aria-expanded={triggerPickerOpen}

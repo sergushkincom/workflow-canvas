@@ -25,7 +25,7 @@ export function BuildNudge({
       }}
     >
       <p
-        className="min-w-0 flex-1 text-[13px] leading-snug"
+        className="min-w-0 flex-1 text-[13px] leading-[1.4]"
         style={{ color: color.ink }}
       >
         {NUDGE_MESSAGE}
@@ -33,7 +33,7 @@ export function BuildNudge({
       <div className="flex shrink-0 gap-2">
         <button
           type="button"
-          className={`h-8 rounded-[8px] px-2.5 text-[12.5px] font-medium text-[var(--surface)] ${focusRing}`}
+          className={`h-8 rounded-[8px] px-2.5 text-[12px] font-medium text-[var(--surface)] ${focusRing}`}
           style={{ background: "var(--accent)" }}
           onClick={onHelp}
         >
@@ -41,7 +41,7 @@ export function BuildNudge({
         </button>
         <button
           type="button"
-          className={`h-8 rounded-[8px] px-2.5 text-[12.5px] font-medium ${focusRing}`}
+          className={`h-8 rounded-[8px] px-2.5 text-[12px] font-medium ${focusRing}`}
           style={{ color: color.ink, background: color.field }}
           aria-label="Dismiss helper suggestion"
           onClick={onDismiss}

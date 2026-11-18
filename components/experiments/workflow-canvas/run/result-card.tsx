@@ -9,11 +9,10 @@ type ResultCardProps = {
 export function ResultCard({ text }: ResultCardProps) {
   return (
     <div
-      className="animate-result-in w-full max-w-none rounded-[12px] border"
+      className="animate-result-in w-full max-w-none rounded-[12px] shadow-card"
       style={{
         width: NODE_WIDTH,
         maxWidth: "100%",
-        borderColor: color.border,
         background: color.surface,
         padding: 16,
         marginTop: 20,
