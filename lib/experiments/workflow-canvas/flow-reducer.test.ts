@@ -9,6 +9,7 @@ import {
   NODE_MAX_WIDTH,
   NODE_MIN_WIDTH,
   TRIGGER_DEFAULT_WIDTH,
+  clearConditionSlot,
   isActionNode,
   isConditionNode,
   type ActionNode,
@@ -444,6 +445,69 @@ describe("flowReducer", () => {
       value: undefined,
     });
     assert.equal(condition(state, nodeId).rows[1]?.field, "lifetime-value");
+  });
+
+  test("updateRow clears one slot and keeps the row", () => {
+    const nodeId = SEED_CONDITION.id;
+    const rowId = "seed-row-1";
+    const before = fresh();
+    assert.equal(condition(before, nodeId).rows.length, 2);
+
+    const clearedValue = flowReducer(before, {
+      type: "updateRow",
+      nodeId,
+      rowId,
+      patch: clearConditionSlot("value"),
+    });
+    assert.deepEqual(rowIds(clearedValue, nodeId), ["seed-row-1", "seed-row-2"]);
+    assert.deepEqual(condition(clearedValue, nodeId).rows[0], {
+      id: rowId,
+      source: "ticket",
+      field: "channel",
+      operator: "is",
+      value: undefined,
+    });
+    assert.equal(
+      condition(clearedValue, nodeId).rows[1],
+      condition(before, nodeId).rows[1],
+    );
+
+    const clearedOperator = flowReducer(before, {
+      type: "updateRow",
+      nodeId,
+      rowId,
+      patch: clearConditionSlot("operator"),
+    });
+    assert.deepEqual(condition(clearedOperator, nodeId).rows[0], {
+      id: rowId,
+      source: "ticket",
+      field: "channel",
+      operator: undefined,
+      value: "email",
+    });
+    assert.deepEqual(rowIds(clearedOperator, nodeId), [
+      "seed-row-1",
+      "seed-row-2",
+    ]);
+
+    const clearedField = flowReducer(before, {
+      type: "updateRow",
+      nodeId,
+      rowId,
+      patch: clearConditionSlot("field"),
+    });
+    assert.deepEqual(condition(clearedField, nodeId).rows[0], {
+      id: rowId,
+      source: "ticket",
+      field: undefined,
+      operator: undefined,
+      value: undefined,
+    });
+    assert.equal(condition(clearedField, nodeId).rows.length, 2);
+    assert.equal(
+      condition(clearedField, nodeId).rows[1]?.field,
+      "lifetime-value",
+    );
   });
 
   test("updateRow leaves a row alone when the id does not match", () => {
