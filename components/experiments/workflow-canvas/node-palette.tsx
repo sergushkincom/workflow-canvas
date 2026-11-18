@@ -33,10 +33,13 @@ import { cn } from "@/lib/utils";
 import {
   NODE_GROUPS,
   NODE_TYPES,
+  filterNodeTypes,
   groupNodeTypes,
+  nodeTypePaletteLabel,
   type NodeTypeDef,
   type PaletteIconName,
 } from "@/lib/experiments/workflow-canvas/node-types";
+import { visibleRecentNodeTypes } from "@/lib/experiments/workflow-canvas/recent-nodes";
 import {
   color,
   tokenStyle,
@@ -67,6 +70,7 @@ const PALETTE_ICON: Record<PaletteIconName, LucideIcon> = {
 type NodePaletteProps = {
   notice: string | null;
   locked: boolean;
+  recentTypes: readonly NodeTypeDef[];
   onAppend: (nodeTypeId: string) => void;
 };
 
@@ -77,19 +81,16 @@ function startsCollapsed(): boolean {
   return window.matchMedia("(max-width: 899px)").matches;
 }
 
-export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
+export function NodePalette({
+  notice,
+  locked,
+  recentTypes,
+  onAppend,
+}: NodePaletteProps) {
   const [collapsed, setCollapsed] = useState(() => startsCollapsed());
   const [query, setQuery] = useState("");
-  const needle = query.trim().toLowerCase();
-  const groups = groupNodeTypes(
-    needle
-      ? NODE_TYPES.filter(
-          (nodeType) =>
-            nodeType.title.toLowerCase().includes(needle) ||
-            nodeType.subtitle.toLowerCase().includes(needle),
-        )
-      : NODE_TYPES,
-  );
+  const groups = groupNodeTypes(filterNodeTypes(NODE_TYPES, query));
+  const recent = visibleRecentNodeTypes(recentTypes, query);
 
   return (
     <aside
@@ -188,7 +189,7 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
             </p>
           ) : null}
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3">
-            {groups.length === 0 ? (
+            {groups.length === 0 && recent.length === 0 ? (
               <p
                 role="status"
                 className="px-1 text-[13px] leading-[1.4]"
@@ -198,26 +199,24 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
               </p>
             ) : (
               <div className="flex flex-col gap-4">
+                {recent.length > 0 ? (
+                  <PaletteSection
+                    label="Recent"
+                    types={recent}
+                    idPrefix="recent"
+                    locked={locked}
+                    onAppend={onAppend}
+                  />
+                ) : null}
                 {groups.map((group) => (
-                  <section key={group.id} aria-label={group.label}>
-                    <h3
-                      className="text-[11px] font-medium leading-tight"
-                      style={{ color: color.muted, paddingBottom: 8 }}
-                    >
-                      {group.label}
-                    </h3>
-                    <ul className="flex flex-col gap-1.5 pt-1">
-                      {group.types.map((nodeType) => (
-                        <li key={nodeType.id}>
-                          <PaletteCard
-                            nodeType={nodeType}
-                            locked={locked}
-                            onAppend={onAppend}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
+                  <PaletteSection
+                    key={group.id}
+                    label={group.label}
+                    types={group.types}
+                    idPrefix="palette"
+                    locked={locked}
+                    onAppend={onAppend}
+                  />
                 ))}
               </div>
             )}
@@ -228,17 +227,56 @@ export function NodePalette({ notice, locked, onAppend }: NodePaletteProps) {
   );
 }
 
+function PaletteSection({
+  label,
+  types,
+  idPrefix,
+  locked,
+  onAppend,
+}: {
+  label: string;
+  types: readonly NodeTypeDef[];
+  idPrefix: string;
+  locked: boolean;
+  onAppend: (nodeTypeId: string) => void;
+}) {
+  return (
+    <section aria-label={label}>
+      <h3
+        className="text-[11px] font-medium leading-tight"
+        style={{ color: color.muted, paddingBottom: 8 }}
+      >
+        {label}
+      </h3>
+      <ul className="flex flex-col gap-1.5 pt-1">
+        {types.map((nodeType) => (
+          <li key={nodeType.id}>
+            <PaletteCard
+              nodeType={nodeType}
+              dragId={`${idPrefix}:${nodeType.id}`}
+              locked={locked}
+              onAppend={onAppend}
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function PaletteCard({
   nodeType,
+  dragId,
   locked,
   onAppend,
 }: {
   nodeType: NodeTypeDef;
+  dragId: string;
   locked: boolean;
   onAppend: (nodeTypeId: string) => void;
 }) {
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
-    id: `palette:${nodeType.id}`,
+    id: dragId,
     data: { source: "palette", nodeTypeId: nodeType.id },
     disabled: locked,
   });
@@ -294,7 +332,7 @@ function PaletteCardFace({ nodeType }: { nodeType: NodeTypeDef }) {
           className="block truncate text-[13px] font-medium leading-tight"
           style={{ color: color.ink }}
         >
-          {nodeType.title}
+          {nodeTypePaletteLabel(nodeType)}
         </span>
         <span
           className="mt-0.5 block truncate text-[12px] leading-[1.4]"

@@ -38,6 +38,7 @@ import { useBuildSession } from "./build-session";
 import { ConditionNodeCard } from "./condition-node";
 import { Connector } from "./connector";
 import { NodePalette, PaletteCardPreview } from "./node-palette";
+import { useRecentNodeTypes } from "./use-recent-nodes";
 import { AiStepNode } from "./run/ai-step-node";
 import type { DecisionLabel } from "./run/decision-panel";
 import { ResultCard } from "./run/result-card";
@@ -55,6 +56,7 @@ import {
 import {
   getNodeType,
   nodeTypeIsTrigger,
+  nodeTypePaletteLabel,
 } from "@/lib/experiments/workflow-canvas/node-types";
 import {
   flowReducer,
@@ -160,7 +162,11 @@ const paletteCollisionDetection: CollisionDetection = (args) => {
 
 function paletteTitle(data: { current?: { nodeTypeId?: unknown } } | null | undefined) {
   const nodeTypeId = readPaletteNodeTypeId(data);
-  return nodeTypeId ? getNodeType(nodeTypeId)?.title : undefined;
+  if (!nodeTypeId) {
+    return undefined;
+  }
+  const nodeType = getNodeType(nodeTypeId);
+  return nodeType ? nodeTypePaletteLabel(nodeType) : undefined;
 }
 
 const paletteAnnouncements: Announcements = {
@@ -428,6 +434,7 @@ export function WorkflowCanvas({
   const [notice, setNotice] = useState<string | null>(null);
   const [dragTypeId, setDragTypeId] = useState<string | null>(null);
   const [overDropId, setOverDropId] = useState<string | null>(null);
+  const recentNodes = useRecentNodeTypes();
 
   const incomplete = incompleteStepCount(state.flow);
   const editingLocked =
@@ -609,6 +616,7 @@ export function WorkflowCanvas({
       rowId: crypto.randomUUID(),
     });
     setEnteringId(id);
+    recentNodes.record("condition");
   }
 
   function insertNodeAt(nodeTypeId: string, index: number) {
@@ -623,6 +631,7 @@ export function WorkflowCanvas({
     const id = crypto.randomUUID();
     safeEdit({ type: "insertNode", id, nodeTypeId, index });
     setEnteringId(id);
+    recentNodes.record(nodeTypeId);
   }
 
   function clearPaletteDrag() {
@@ -709,6 +718,7 @@ export function WorkflowCanvas({
         <NodePalette
           notice={notice}
           locked={editingLocked}
+          recentTypes={recentNodes.types}
           onAppend={(nodeTypeId) =>
             insertNodeAt(nodeTypeId, state.flow.steps.length)
           }
