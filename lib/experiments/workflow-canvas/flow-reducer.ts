@@ -155,7 +155,7 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
             next.field = undefined;
             next.operator = undefined;
             next.value = undefined;
-          } else if (action.patch.field !== undefined) {
+          } else if ("field" in action.patch) {
             next.operator = undefined;
             next.value = undefined;
           } else if (action.patch.operator === "is empty") {

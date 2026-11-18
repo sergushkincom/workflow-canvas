@@ -93,6 +93,21 @@ export function clampNodeWidth(width: number): number {
   return Math.min(NODE_MAX_WIDTH, Math.max(NODE_MIN_WIDTH, Math.round(width)));
 }
 
+export type ConditionSlot = "field" | "operator" | "value";
+
+/** Patch that empties one slot. The reducer drops operator and value when the field is cleared. */
+export function clearConditionSlot(
+  slot: ConditionSlot,
+): Partial<Omit<ConditionRow, "id">> {
+  if (slot === "field") {
+    return { field: undefined };
+  }
+  if (slot === "operator") {
+    return { operator: undefined };
+  }
+  return { value: undefined };
+}
+
 export function isRowComplete(row: ConditionRow): boolean {
   if (!row.source || !row.field || !row.operator) {
     return false;

@@ -14,9 +14,11 @@ import {
   OPERATORS,
   SOURCES,
 } from "@/lib/experiments/workflow-canvas/data";
-import type {
-  ConditionRow,
-  Conjunction,
+import {
+  clearConditionSlot,
+  type ConditionRow,
+  type ConditionSlot,
+  type Conjunction,
 } from "@/lib/experiments/workflow-canvas/types";
 import { color, tokenStyle } from "@/lib/experiments/workflow-canvas/tokens";
 
@@ -61,6 +63,12 @@ export function ConditionRowItem({
   const fields = getFieldsForSource(row.source);
   const field = getField(row.source, row.field);
   const hideValue = row.operator === "is empty";
+  const clearSlot = (slot: ConditionSlot) => {
+    onCloseMenu();
+    onPatch(clearConditionSlot(slot));
+  };
+  const clearName = (slot: ConditionSlot) =>
+    `Clear ${slot} for condition row ${index + 1}`;
 
   return (
     <div
@@ -151,6 +159,8 @@ export function ConditionRowItem({
           onPatch({ field: id });
           onCloseMenu();
         }}
+        onClear={() => clearSlot("field")}
+        clearName={clearName("field")}
         readOnly={readOnly}
       />
 
@@ -167,6 +177,8 @@ export function ConditionRowItem({
           onPatch({ operator: id });
           onCloseMenu();
         }}
+        onClear={() => clearSlot("operator")}
+        clearName={clearName("operator")}
         readOnly={readOnly}
       />
 
@@ -178,6 +190,8 @@ export function ConditionRowItem({
             type="number"
             value={row.value}
             onChange={(value) => onPatch({ value })}
+            onClear={() => clearSlot("value")}
+            clearName={clearName("value")}
             readOnly={readOnly}
           />
         ) : field?.valueKind === "text" ? (
@@ -186,6 +200,8 @@ export function ConditionRowItem({
             placeholder="value"
             value={row.value}
             onChange={(value) => onPatch({ value })}
+            onClear={() => clearSlot("value")}
+            clearName={clearName("value")}
             readOnly={readOnly}
           />
         ) : (
@@ -206,6 +222,8 @@ export function ConditionRowItem({
               onPatch({ value: id });
               onCloseMenu();
             }}
+            onClear={() => clearSlot("value")}
+            clearName={clearName("value")}
             readOnly={readOnly}
           />
         )
