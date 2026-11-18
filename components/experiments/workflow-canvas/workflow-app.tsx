@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   AppSidebar,
@@ -15,6 +15,7 @@ import { BuildSessionProvider } from "./build-session";
 import { FirstRunShell } from "./first-run-shell";
 import { TemplatesModal } from "./templates-modal";
 import { IDLE_NUDGE_MS } from "@/lib/experiments/workflow-canvas/build-helper";
+import type { NamedWorkflow } from "@/lib/experiments/workflow-canvas/credentials";
 import { initialFlowState } from "@/lib/experiments/workflow-canvas/flow-reducer";
 import { getNodeType } from "@/lib/experiments/workflow-canvas/node-types";
 import {
@@ -188,6 +189,17 @@ export function WorkflowApp({
   }
 
   const onHome = !showEditor;
+  const workflows: NamedWorkflow[] = editor
+    ? [{ name: editor.name, flow: editor.flow }]
+    : [];
+  const rememberFlow = useCallback((flow: Flow) => {
+    setEditor((current) => {
+      if (!current || current.flow === flow) {
+        return current;
+      }
+      return { ...current, flow };
+    });
+  }, []);
 
   return (
     <BuildSessionProvider nudgeDelayMs={nudgeDelayMs}>
@@ -208,6 +220,7 @@ export function WorkflowApp({
             title={editor.name}
             autoFocusTitle={editor.autoFocusTitle}
             initialHighlight={editor.highlight}
+            onFlowChange={rememberFlow}
           />
         ) : (
           <FirstRunShell
@@ -218,6 +231,7 @@ export function WorkflowApp({
             onChooseTrigger={chooseTrigger}
             onOpenBuilt={openBuilt}
             onOpenTemplate={openStarter}
+            workflows={workflows}
           />
         )}
       </div>

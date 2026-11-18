@@ -37,6 +37,8 @@ export type ActionNode = {
   width: number;
   /** Custom label. Absent means the node shows `title`. */
   name?: string;
+  /** Mock account id for steps that send as a connected account. */
+  credentialId?: string;
 };
 
 export type StepNode = ConditionNode | ActionNode;
@@ -72,6 +74,7 @@ export type FlowAction =
   | { type: "appendRows"; nodeId: string; rows: ConditionRow[] }
   | { type: "resizeNode"; id: string; width: number }
   | { type: "renameNode"; id: string; name: string }
+  | { type: "setNodeCredential"; id: string; credentialId: string }
   | { type: "insertNode"; id: string; nodeTypeId: string; index: number }
   | { type: "showTriggerHint" }
   | { type: "clearTriggerHint" }
@@ -118,6 +121,21 @@ export const NODE_MAX_WIDTH = 1200;
 
 export function clampNodeWidth(width: number): number {
   return Math.min(NODE_MAX_WIDTH, Math.max(NODE_MIN_WIDTH, Math.round(width)));
+}
+
+export type ConditionSlot = "field" | "operator" | "value";
+
+/** Patch that empties one slot. The reducer drops operator and value when the field is cleared. */
+export function clearConditionSlot(
+  slot: ConditionSlot,
+): Partial<Omit<ConditionRow, "id">> {
+  if (slot === "field") {
+    return { field: undefined };
+  }
+  if (slot === "operator") {
+    return { operator: undefined };
+  }
+  return { value: undefined };
 }
 
 export function isRowComplete(row: ConditionRow): boolean {

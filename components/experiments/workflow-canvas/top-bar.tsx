@@ -14,6 +14,11 @@ import {
   BUILD_HELPER_DESCRIPTION,
   BUILD_HELPER_LABEL,
 } from "@/lib/experiments/workflow-canvas/build-helper";
+import {
+  COMPLETE_STEPS_TO_RUN,
+  RUN_AGAIN_LABEL,
+  humanizeIssue,
+} from "@/lib/experiments/workflow-canvas/stale";
 import { color } from "@/lib/experiments/workflow-canvas/tokens";
 
 type TopBarProps = {
@@ -24,6 +29,8 @@ type TopBarProps = {
   totalMs?: number;
   onTestRun: () => void;
   onStop: () => void;
+  /** A finished run whose output no longer matches the current steps. */
+  resultsStale?: boolean;
   onOpenTemplates?: () => void;
   helperOpen?: boolean;
   onToggleHelper?: () => void;
@@ -37,6 +44,7 @@ export function TopBar({
   totalMs,
   onTestRun,
   onStop,
+  resultsStale = false,
   onOpenTemplates,
   helperOpen = false,
   onToggleHelper,
@@ -47,22 +55,26 @@ export function TopBar({
       ? `${stepLabel} · ${incompleteCount} incomplete`
       : stepLabel;
 
-  const active = runPhase !== "idle";
-  const runDisabled = incompleteCount > 0 && !active;
+  const doneStale = resultsStale && runPhase === "done";
+  const showStop = runPhase !== "idle";
+  const showTestRun = runPhase === "idle";
+  const runDisabled = incompleteCount > 0;
 
-  const runButton = (
+  const runButton = (label: string, onClick: () => void, disabled: boolean) => (
     <Button
       type="button"
       variant="secondary"
       size="sm"
       className="focus-ring h-7 shrink-0 rounded-[6px] px-2.5 text-[12px] font-medium shadow-none focus-visible:ring-0"
       style={{ background: color.field, color: color.ink }}
-      disabled={runDisabled}
-      onClick={active ? onStop : onTestRun}
+      disabled={disabled}
+      onClick={onClick}
     >
-      {active ? "Stop" : "Test run"}
+      {label}
     </Button>
   );
+
+  const blocker = humanizeIssue(COMPLETE_STEPS_TO_RUN);
 
   return (
     <header
@@ -118,25 +130,46 @@ export function TopBar({
             Templates
           </Button>
         ) : null}
-        {runDisabled ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">{runButton}</span>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              Complete every step to run
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          runButton
-        )}
+        {doneStale ? (
+          runDisabled ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  {runButton(RUN_AGAIN_LABEL, onTestRun, true)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{blocker}</TooltipContent>
+            </Tooltip>
+          ) : (
+            runButton(RUN_AGAIN_LABEL, onTestRun, false)
+          )
+        ) : null}
+        {showStop ? runButton("Stop", onStop, false) : null}
+        {showTestRun ? (
+          runDisabled ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  {runButton("Test run", onTestRun, true)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{blocker}</TooltipContent>
+            </Tooltip>
+          ) : (
+            runButton("Test run", onTestRun, false)
+          )
+        ) : null}
         <p
           className="inline-flex h-7 shrink-0 items-center rounded-[6px] px-2 text-[12px] font-medium"
           style={{ background: color.field, color: color.muted }}
         >
-          {runPhase === "done" && totalMs !== undefined
-            ? `Run complete · ${formatElapsed(totalMs)}`
-            : summary}
+          {doneStale
+            ? incompleteCount > 0
+              ? `Step changed · ${incompleteCount} incomplete`
+              : "Step changed · run again"
+            : runPhase === "done" && totalMs !== undefined
+              ? `Run complete · ${formatElapsed(totalMs)}`
+              : summary}
         </p>
       </div>
     </header>

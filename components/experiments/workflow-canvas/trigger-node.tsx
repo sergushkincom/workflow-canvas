@@ -11,7 +11,10 @@ import {
   type FlowAction,
   type TriggerNode,
 } from "@/lib/experiments/workflow-canvas/types";
-import type { NodeRunState } from "@/lib/experiments/workflow-canvas/run-machine";
+import type {
+  NodeRunState,
+  StaleReason,
+} from "@/lib/experiments/workflow-canvas/run-machine";
 import {
   color,
   tokenStyle,
@@ -30,6 +33,9 @@ type TriggerNodeCardProps = {
   elapsedMs?: number;
   startedAt?: number | null;
   runDurationMs?: number;
+  staleReason?: StaleReason;
+  onRunAgain?: () => void;
+  runAgainDisabled?: boolean;
   highlighted?: boolean;
   onChooseTrigger?: () => void;
   triggerPickerOpen?: boolean;
@@ -47,6 +53,9 @@ export function TriggerNodeCard({
   elapsedMs,
   startedAt = null,
   runDurationMs,
+  staleReason,
+  onRunAgain,
+  runAgainDisabled = false,
   highlighted = false,
   onChooseTrigger,
   triggerPickerOpen = false,
@@ -118,6 +127,9 @@ export function TriggerNodeCard({
           elapsedMs={elapsedMs}
           ticking={ticking}
           startedAt={startedAt}
+          staleReason={staleReason}
+          onRunAgain={onRunAgain}
+          runAgainDisabled={runAgainDisabled}
         />
         {onChooseTrigger && !readOnly ? (
           <div

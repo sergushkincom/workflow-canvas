@@ -6,6 +6,7 @@ import type { ShellSection } from "./app-sidebar";
 import { BuildHelperPanel, type BuiltWorkflow } from "./build-helper-panel";
 import { BuildNudge } from "./build-nudge";
 import { useBuildSession } from "./build-session";
+import { CredentialsPanel } from "./credentials-panel";
 import { StarterCards } from "./starter-cards";
 import { TriggerPicker } from "./trigger-picker";
 import { useIdleNudge } from "./use-idle-nudge";
@@ -14,6 +15,7 @@ import {
   BUILD_HELPER_DESCRIPTION,
   BUILD_HELPER_LABEL,
 } from "@/lib/experiments/workflow-canvas/build-helper";
+import type { NamedWorkflow } from "@/lib/experiments/workflow-canvas/credentials";
 import {
   blankFlow,
   type WorkflowTemplate,
@@ -24,16 +26,12 @@ const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]";
 
 const QUIET: Record<
-  Exclude<ShellSection, "home" | "workflows">,
+  Exclude<ShellSection, "home" | "workflows" | "credentials">,
   { title: string; body: string }
 > = {
   executions: {
     title: "Executions",
     body: "Runs stay on the canvas in this prototype. Nothing is stored.",
-  },
-  credentials: {
-    title: "Credentials",
-    body: "Credentials are not part of this prototype.",
   },
   settings: {
     title: "Settings",
@@ -49,6 +47,7 @@ type FirstRunShellProps = {
   onChooseTrigger: (nodeTypeId: string) => void;
   onOpenBuilt: (result: BuiltWorkflow) => void;
   onOpenTemplate: (template: WorkflowTemplate, label: string) => void;
+  workflows: readonly NamedWorkflow[];
 };
 
 export function FirstRunShell({
@@ -59,6 +58,7 @@ export function FirstRunShell({
   onChooseTrigger,
   onOpenBuilt,
   onOpenTemplate,
+  workflows,
 }: FirstRunShellProps) {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
@@ -75,7 +75,12 @@ export function FirstRunShell({
       {section === "workflows" ? (
         <WorkflowsEmpty onOpenTemplates={onOpenTemplates} />
       ) : null}
-      {section !== "home" && section !== "workflows" ? (
+      {section === "credentials" ? (
+        <CredentialsPanel workflows={workflows} />
+      ) : null}
+      {section !== "home" &&
+      section !== "workflows" &&
+      section !== "credentials" ? (
         <QuietPanel title={QUIET[section].title} body={QUIET[section].body} />
       ) : null}
     </div>

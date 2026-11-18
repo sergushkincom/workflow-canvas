@@ -1,4 +1,8 @@
 import { rowSignature } from "./assistant";
+import {
+  findCredential,
+  nodeAcceptsCredential,
+} from "./credentials";
 import { SEED_CONDITION, TRIGGER } from "./data";
 import { getNodeType } from "./node-types";
 import type {
@@ -12,6 +16,7 @@ import {
   CONDITION_DEFAULT_WIDTH,
   TRIGGER_DEFAULT_WIDTH,
   clampNodeWidth,
+  isActionNode,
   isConditionNode,
   stepDefaultName,
 } from "./types";
@@ -221,7 +226,7 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
             next.field = undefined;
             next.operator = undefined;
             next.value = undefined;
-          } else if (action.patch.field !== undefined) {
+          } else if ("field" in action.patch) {
             next.operator = undefined;
             next.value = undefined;
           } else if (action.patch.operator === "is empty") {
@@ -241,6 +246,34 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
         }
         return { ...node, rows: [...node.rows, ...extra] };
       });
+    case "setNodeCredential": {
+      if (!findCredential(action.credentialId)) {
+        return state;
+      }
+      let changed = false;
+      const steps = state.flow.steps.map((node) => {
+        if (
+          !isActionNode(node) ||
+          node.id !== action.id ||
+          !nodeAcceptsCredential(node.nodeTypeId) ||
+          node.credentialId === action.credentialId
+        ) {
+          return node;
+        }
+        changed = true;
+        return { ...node, credentialId: action.credentialId };
+      });
+      if (!changed) {
+        return state;
+      }
+      return {
+        ...state,
+        flow: {
+          ...state.flow,
+          steps,
+        },
+      };
+    }
     case "resizeNode": {
       const width = clampNodeWidth(action.width);
       if (action.id === "trigger") {

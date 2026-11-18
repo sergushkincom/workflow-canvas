@@ -47,6 +47,7 @@ export function captureRunSnapshot(state: CaptureState): Run {
           trigger: TRIGGER_MS,
         },
         streamedText: "",
+        stale: {},
         totalMs: TRIGGER_MS,
       };
     case "awaiting":
@@ -66,6 +67,7 @@ export function captureRunSnapshot(state: CaptureState): Run {
           [conditionId]: CONDITION_MS,
         },
         streamedText: CLASSIFY_REASONING,
+        stale: {},
         totalMs: TRIGGER_MS + CONDITION_MS,
       };
     case "done":
@@ -88,6 +90,7 @@ export function captureRunSnapshot(state: CaptureState): Run {
           [CLASSIFY_STEP_ID]: 2600,
         },
         streamedText: CLASSIFY_REASONING,
+        stale: {},
         decision: "confirmed",
         classifyLabel: "Billing dispute",
         totalMs: TRIGGER_MS + CONDITION_MS + 2600,
