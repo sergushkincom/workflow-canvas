@@ -117,6 +117,27 @@ describe("build helper", () => {
     assert.equal(applied.flow.steps[1]?.title, "Send email");
     assert.deepEqual(applied.highlightedIds, ["trigger", "id-1", "id-3"]);
 
+    const renamed = cloneFlow(flow);
+    renamed.trigger.name = "Inbox";
+    renamed.steps = [
+      {
+        id: "rule",
+        conjunction: "and",
+        width: CONDITION_DEFAULT_WIDTH,
+        rows: [],
+        name: "VIP check",
+      },
+    ];
+    const followUp = proposeIntent(renamed, "form-submitted");
+    assert.ok(followUp);
+    assert.ok(
+      proposalLines(followUp).some((line) => line.includes("VIP check")),
+    );
+    const replaced = applyProposal(renamed, followUp, ids());
+    assert.equal(renamed.trigger.name, "Inbox");
+    assert.equal(replaced.flow.trigger.name, undefined);
+    assert.equal(replaced.flow.trigger.title, "Incoming webhook");
+
     const undone = flowReducer(
       { ...initialFlowState, flow: applied.flow },
       { type: "replaceFlow", flow: snapshot },

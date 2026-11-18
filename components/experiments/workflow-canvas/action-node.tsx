@@ -1,6 +1,9 @@
 "use client";
 
+import { useRef } from "react";
+
 import { NodeShell } from "./node-shell";
+import { NodeTitle, type NodeTitleHandle } from "./node-title";
 import { PaletteIconTile } from "./node-palette";
 import { cn } from "@/lib/utils";
 import {
@@ -11,9 +14,11 @@ import {
   color,
   type TypeTintKey,
 } from "@/lib/experiments/workflow-canvas/tokens";
-import type {
-  ActionNode,
-  FlowAction,
+import {
+  stepDefaultName,
+  stepDisplayName,
+  type ActionNode,
+  type FlowAction,
 } from "@/lib/experiments/workflow-canvas/types";
 
 type ActionNodeCardProps = {
@@ -41,6 +46,7 @@ export function ActionNodeCard({
   const tintKey: TypeTintKey = definition?.tint ?? "neutral";
   const icon = definition?.icon ?? "Search";
   const chip = definition ? nodeTypeChip(definition.group) : "Action";
+  const titleRef = useRef<NodeTitleHandle>(null);
 
   return (
     <div
@@ -60,18 +66,25 @@ export function ActionNodeCard({
         onResize={(width) =>
           dispatch({ type: "resizeNode", id: node.id, width })
         }
+        onStartRename={
+          readOnly ? undefined : () => titleRef.current?.startRename()
+        }
         readOnly={readOnly}
         highlighted={highlighted}
       >
         <div className="flex items-center gap-2.5" style={{ padding: 16 }}>
           <PaletteIconTile icon={icon} tintKey={tintKey} />
-          <span className="min-w-0 text-left">
-            <span
-              className="block truncate text-[13px] font-semibold leading-tight"
-              style={{ color: color.ink }}
-            >
-              {node.title}
-            </span>
+          <span className="min-w-0 flex-1 text-left">
+            <NodeTitle
+              ref={titleRef}
+              displayName={stepDisplayName(node)}
+              defaultName={stepDefaultName(node)}
+              selected={selected}
+              readOnly={readOnly}
+              onRename={(name) =>
+                dispatch({ type: "renameNode", id: node.id, name })
+              }
+            />
             <span
               className="mt-0.5 block text-[12px] leading-[1.4]"
               style={{ color: color.muted }}

@@ -5,6 +5,7 @@ import { SEED_CONDITION, TRIGGER } from "./data";
 import { flowReducer, initialFlowState } from "./flow-reducer";
 import { getNodeType } from "./node-types";
 import {
+  CONDITION_DEFAULT_NAME,
   CONDITION_DEFAULT_WIDTH,
   NODE_MAX_WIDTH,
   NODE_MIN_WIDTH,
@@ -665,6 +666,167 @@ describe("flowReducer", () => {
       }),
       state,
     );
+  });
+
+  test("renameNode stores a trimmed custom name on trigger, condition, and action nodes", () => {
+    const state = fresh();
+    const trigger = flowReducer(state, {
+      type: "renameNode",
+      id: "trigger",
+      name: "  Inbox  ",
+    });
+    assert.equal(trigger.flow.trigger.name, "Inbox");
+    assert.equal(trigger.flow.trigger.title, TRIGGER.title);
+    assert.equal(trigger.selectedId, state.selectedId);
+    assert.equal(trigger.flow.steps, state.flow.steps);
+    assert.notEqual(trigger.flow.trigger, state.flow.trigger);
+
+    const condition = flowReducer(trigger, {
+      type: "renameNode",
+      id: SEED_CONDITION.id,
+      name: "Billing rules",
+    });
+    assert.equal(condition.flow.steps[0]?.name, "Billing rules");
+    assert.equal(condition.flow.trigger, trigger.flow.trigger);
+
+    const inserted = flowReducer(condition, {
+      type: "insertNode",
+      id: "email",
+      nodeTypeId: "send-email",
+      index: 1,
+    });
+    const definition = getNodeType("send-email");
+    assert.ok(definition);
+    const actionNode = flowReducer(inserted, {
+      type: "renameNode",
+      id: "email",
+      name: "Email the customer",
+    });
+    assert.equal(action(actionNode, "email").name, "Email the customer");
+    assert.equal(action(actionNode, "email").title, definition.title);
+    assert.equal(actionNode.flow.steps[0], inserted.flow.steps[0]);
+    assert.equal(actionNode.selectedId, inserted.selectedId);
+  });
+
+  test("renameNode reverts an empty or default name and ignores no-ops", () => {
+    let state = flowReducer(fresh(), {
+      type: "renameNode",
+      id: SEED_CONDITION.id,
+      name: "Billing rules",
+    });
+    const cleared = flowReducer(state, {
+      type: "renameNode",
+      id: SEED_CONDITION.id,
+      name: "   ",
+    });
+    assert.equal(condition(cleared, SEED_CONDITION.id).name, undefined);
+    assert.equal(
+      flowReducer(cleared, {
+        type: "renameNode",
+        id: SEED_CONDITION.id,
+        name: "",
+      }),
+      cleared,
+    );
+    assert.equal(
+      flowReducer(cleared, {
+        type: "renameNode",
+        id: SEED_CONDITION.id,
+        name: CONDITION_DEFAULT_NAME,
+      }),
+      cleared,
+    );
+
+    state = flowReducer(cleared, {
+      type: "renameNode",
+      id: "trigger",
+      name: TRIGGER.title,
+    });
+    assert.equal(state, cleared);
+
+    const named = flowReducer(state, {
+      type: "renameNode",
+      id: "trigger",
+      name: "Inbox",
+    });
+    assert.equal(
+      flowReducer(named, { type: "renameNode", id: "trigger", name: "Inbox" }),
+      named,
+    );
+    const reverted = flowReducer(named, {
+      type: "renameNode",
+      id: "trigger",
+      name: `  ${TRIGGER.title}  `,
+    });
+    assert.equal(reverted.flow.trigger.name, undefined);
+    assert.equal(reverted.flow.trigger.title, TRIGGER.title);
+  });
+
+  test("renameNode of an unknown id is a no-op and does not mutate the previous state", () => {
+    const state = fresh();
+    const snapshot = structuredClone(state);
+    assert.equal(
+      flowReducer(state, { type: "renameNode", id: "missing", name: "Nope" }),
+      state,
+    );
+
+    const renamed = flowReducer(state, {
+      type: "renameNode",
+      id: SEED_CONDITION.id,
+      name: "Billing rules",
+    });
+    assert.deepEqual(state, snapshot);
+    assert.equal(condition(state, SEED_CONDITION.id).name, undefined);
+    assert.equal(condition(renamed, SEED_CONDITION.id).name, "Billing rules");
+  });
+
+  test("replacing the flow undoes a rename, and changing trigger type clears it", () => {
+    const before = fresh();
+    const renamed = flowReducer(before, {
+      type: "renameNode",
+      id: "trigger",
+      name: "Inbox",
+    });
+    const undone = flowReducer(renamed, {
+      type: "replaceFlow",
+      flow: before.flow,
+    });
+    assert.equal(undone.flow.trigger.name, undefined);
+    assert.deepEqual(undone.flow, before.flow);
+
+    const schedule = getNodeType("on-a-schedule");
+    const webhook = getNodeType("incoming-webhook");
+    assert.ok(schedule);
+    assert.ok(webhook);
+    const scheduled = flowReducer(before, {
+      type: "setTrigger",
+      nodeTypeId: schedule.id,
+      title: schedule.title,
+      description: schedule.subtitle,
+    });
+    const named = flowReducer(scheduled, {
+      type: "renameNode",
+      id: "trigger",
+      name: "Nightly",
+    });
+    assert.equal(
+      flowReducer(named, {
+        type: "setTrigger",
+        nodeTypeId: schedule.id,
+        title: schedule.title,
+        description: schedule.subtitle,
+      }),
+      named,
+    );
+    const changed = flowReducer(named, {
+      type: "setTrigger",
+      nodeTypeId: webhook.id,
+      title: webhook.title,
+      description: webhook.subtitle,
+    });
+    assert.equal(changed.flow.trigger.name, undefined);
+    assert.equal(changed.flow.trigger.title, webhook.title);
+    assert.equal(changed.flow.trigger.nodeTypeId, webhook.id);
   });
 
   test("showTriggerHint selects the trigger and clearTriggerHint leaves the selection", () => {

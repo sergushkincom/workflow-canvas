@@ -9,6 +9,7 @@ import { ConditionAssistantPanel } from "./condition-assistant";
 import { ConditionRowItem } from "./condition-row";
 import { useChipMenu } from "./field-select";
 import { NodeShell } from "./node-shell";
+import { NodeTitle, type NodeTitleHandle } from "./node-title";
 import { RunNodeFooter } from "./run/run-node-footer";
 import {
   Tooltip,
@@ -19,6 +20,8 @@ import { cn } from "@/lib/utils";
 import type { FlowAction } from "@/lib/experiments/workflow-canvas/types";
 import {
   isNodeIncomplete,
+  stepDefaultName,
+  stepDisplayName,
   type ConditionNode,
 } from "@/lib/experiments/workflow-canvas/types";
 import type { NodeRunState } from "@/lib/experiments/workflow-canvas/run-machine";
@@ -81,6 +84,7 @@ export function ConditionNodeCard({
   const tint = typeTint.condition;
   const ticking = runState === "running";
   const sparklesRef = useRef<HTMLButtonElement>(null);
+  const titleRef = useRef<NodeTitleHandle>(null);
   const wasOpen = useRef(false);
 
   useEffect(() => {
@@ -109,6 +113,9 @@ export function ConditionNodeCard({
         onResize={(width) =>
           dispatch({ type: "resizeNode", id: node.id, width })
         }
+        onStartRename={
+          readOnly ? undefined : () => titleRef.current?.startRename()
+        }
         readOnly={readOnly}
         running={runState === "running"}
         runDurationMs={runDurationMs}
@@ -134,11 +141,17 @@ export function ConditionNodeCard({
               aria-hidden
             />
           </span>
-          <h2
-            className="text-[13px] font-semibold leading-tight"
-            style={{ color: color.ink }}
-          >
-            Condition
+          <h2 className="m-0 min-w-0 flex-1">
+            <NodeTitle
+              ref={titleRef}
+              displayName={stepDisplayName(node)}
+              defaultName={stepDefaultName(node)}
+              selected={selected}
+              readOnly={readOnly}
+              onRename={(name) =>
+                dispatch({ type: "renameNode", id: node.id, name })
+              }
+            />
           </h2>
           {assistantEnabled && assistantOpen && assistantMinimized ? (
             <button

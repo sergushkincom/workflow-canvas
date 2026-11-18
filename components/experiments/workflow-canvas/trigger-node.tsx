@@ -1,12 +1,15 @@
 "use client";
 
+import { useRef } from "react";
 import { Zap } from "lucide-react";
 
 import { NodeShell } from "./node-shell";
+import { NodeTitle, type NodeTitleHandle } from "./node-title";
 import { RunNodeFooter } from "./run/run-node-footer";
-import type {
-  FlowAction,
-  TriggerNode,
+import {
+  triggerDisplayName,
+  type FlowAction,
+  type TriggerNode,
 } from "@/lib/experiments/workflow-canvas/types";
 import type { NodeRunState } from "@/lib/experiments/workflow-canvas/run-machine";
 import {
@@ -50,6 +53,7 @@ export function TriggerNodeCard({
 }: TriggerNodeCardProps) {
   const tint = typeTint.trigger;
   const ticking = runState === "running";
+  const titleRef = useRef<NodeTitleHandle>(null);
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -61,6 +65,9 @@ export function TriggerNodeCard({
         onSelect={onSelect}
         onResize={(width) =>
           dispatch({ type: "resizeNode", id: "trigger", width })
+        }
+        onStartRename={
+          readOnly ? undefined : () => titleRef.current?.startRename()
         }
         readOnly={readOnly}
         running={runState === "running"}
@@ -87,13 +94,17 @@ export function TriggerNodeCard({
               aria-hidden
             />
           </span>
-          <span className="min-w-0 text-left">
-            <span
-              className="block truncate text-[13px] font-semibold leading-tight"
-              style={{ color: color.ink }}
-            >
-              {node.title}
-            </span>
+          <span className="min-w-0 flex-1 text-left">
+            <NodeTitle
+              ref={titleRef}
+              displayName={triggerDisplayName(node)}
+              defaultName={node.title}
+              selected={selected}
+              readOnly={readOnly}
+              onRename={(name) =>
+                dispatch({ type: "renameNode", id: "trigger", name })
+              }
+            />
             <span
               className="mt-0.5 block text-[12px] leading-[1.4]"
               style={{ color: color.muted }}
