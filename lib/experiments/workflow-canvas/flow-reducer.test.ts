@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
+import { findCredential } from "./credentials";
 import { SEED_CONDITION, TRIGGER } from "./data";
 import { flowReducer, initialFlowState } from "./flow-reducer";
 import { getNodeType } from "./node-types";
@@ -12,6 +13,7 @@ import {
   clearConditionSlot,
   isActionNode,
   isConditionNode,
+  isNodeIncomplete,
   type ActionNode,
   type ConditionNode,
   type ConditionRow,
@@ -760,5 +762,71 @@ describe("flowReducer", () => {
     assert.notEqual(next, state);
     assert.equal(condition(state, SEED_CONDITION.id).rows.length, 2);
     assert.equal(condition(next, SEED_CONDITION.id).rows.length, 1);
+  });
+
+  test("setNodeCredential keeps a known account on Send email only", () => {
+    const inserted = flowReducer(fresh(), {
+      type: "insertNode",
+      id: "email",
+      nodeTypeId: "send-email",
+      index: 1,
+    });
+    assert.equal(action(inserted, "email").credentialId, undefined);
+
+    const chosen = flowReducer(inserted, {
+      type: "setNodeCredential",
+      id: "email",
+      credentialId: "gmail-work",
+    });
+    assert.equal(action(chosen, "email").credentialId, "gmail-work");
+    assert.ok(findCredential(action(chosen, "email").credentialId));
+    assert.equal(action(inserted, "email").credentialId, undefined);
+    assert.equal(isNodeIncomplete(action(chosen, "email")), true);
+
+    const same = flowReducer(chosen, {
+      type: "setNodeCredential",
+      id: "email",
+      credentialId: "gmail-work",
+    });
+    assert.equal(same, chosen);
+
+    const switched = flowReducer(chosen, {
+      type: "setNodeCredential",
+      id: "email",
+      credentialId: "gmail-personal",
+    });
+    assert.equal(action(switched, "email").credentialId, "gmail-personal");
+
+    assert.equal(
+      flowReducer(switched, {
+        type: "setNodeCredential",
+        id: "email",
+        credentialId: "gmail-other",
+      }),
+      switched,
+    );
+    assert.equal(
+      flowReducer(switched, {
+        type: "setNodeCredential",
+        id: "missing",
+        credentialId: "gmail-work",
+      }),
+      switched,
+    );
+
+    const queued = flowReducer(switched, {
+      type: "insertNode",
+      id: "queue",
+      nodeTypeId: "assign-to-queue",
+      index: 0,
+    });
+    const ignored = flowReducer(queued, {
+      type: "setNodeCredential",
+      id: "queue",
+      credentialId: "gmail-work",
+    });
+    assert.equal(ignored, queued);
+    assert.equal(action(ignored, "queue").credentialId, undefined);
+    assert.equal(action(ignored, "email").credentialId, "gmail-personal");
   });
 });

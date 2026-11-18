@@ -1,8 +1,10 @@
 "use client";
 
+import { CredentialSelect } from "./credential-select";
 import { NodeShell } from "./node-shell";
 import { PaletteIconTile } from "./node-palette";
 import { cn } from "@/lib/utils";
+import { nodeAcceptsCredential } from "@/lib/experiments/workflow-canvas/credentials";
 import {
   getNodeType,
   nodeTypeChip,
@@ -80,22 +82,45 @@ export function ActionNodeCard({
             </span>
           </span>
         </div>
-        <p
-          className="flex items-center gap-1.5 border-t text-[12px] leading-[1.4]"
-          style={{
-            borderColor: color.border,
-            color: color.muted,
-            paddingInline: 16,
-            paddingBlock: 10,
-          }}
-        >
-          <span
-            className="size-1.5 rounded-full"
-            style={{ background: color.faint }}
-            aria-hidden
-          />
-          Not configured yet
-        </p>
+        {nodeAcceptsCredential(node.nodeTypeId) ? (
+          <div
+            className="border-t"
+            style={{
+              borderColor: color.border,
+              paddingInline: 12,
+              paddingBlock: 10,
+            }}
+          >
+            <CredentialSelect
+              credentialId={node.credentialId}
+              disabled={readOnly}
+              onSelect={(credentialId) =>
+                dispatch({
+                  type: "setNodeCredential",
+                  id: node.id,
+                  credentialId,
+                })
+              }
+            />
+          </div>
+        ) : (
+          <p
+            className="flex items-center gap-1.5 border-t text-[12px] leading-[1.4]"
+            style={{
+              borderColor: color.border,
+              color: color.muted,
+              paddingInline: 16,
+              paddingBlock: 10,
+            }}
+          >
+            <span
+              className="size-1.5 rounded-full"
+              style={{ background: color.faint }}
+              aria-hidden
+            />
+            Not configured yet
+          </p>
+        )}
       </NodeShell>
     </div>
   );

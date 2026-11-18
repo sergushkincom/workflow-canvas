@@ -31,6 +31,8 @@ export type ActionNode = {
   title: string;
   subtitle: string;
   width: number;
+  /** Mock account id for steps that send as a connected account. */
+  credentialId?: string;
 };
 
 export type StepNode = ConditionNode | ActionNode;
@@ -65,6 +67,7 @@ export type FlowAction =
     }
   | { type: "appendRows"; nodeId: string; rows: ConditionRow[] }
   | { type: "resizeNode"; id: string; width: number }
+  | { type: "setNodeCredential"; id: string; credentialId: string }
   | { type: "insertNode"; id: string; nodeTypeId: string; index: number }
   | { type: "showTriggerHint" }
   | { type: "clearTriggerHint" }
