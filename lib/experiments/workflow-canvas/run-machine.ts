@@ -10,6 +10,7 @@ import {
   STREAM_CHAR_MS,
   TRIGGER_MS,
 } from "./run-timings";
+import { applyConfigStale, type StaleReason } from "./stale";
 import type { ConditionNode, ConditionRow, Flow } from "./types";
 
 export type RunPhase = "idle" | "running" | "awaiting-decision" | "done";
@@ -22,12 +23,19 @@ export type NodeRunState =
   | "awaiting"
   | "done";
 
+export type { StaleReason };
+
 export type Run = {
   phase: RunPhase;
   nodeStates: Record<string, NodeRunState>;
   outputs: Record<string, string>;
   elapsed: Record<string, number>;
   streamedText: string;
+  /**
+   * Nodes whose last output was produced before a later configuration edit.
+   * `edited` is the step that changed. `upstream` ran after that step.
+   */
+  stale: Record<string, StaleReason>;
   decision?: "confirmed" | "escalated";
   totalMs?: number;
   resultText?: string;
@@ -53,7 +61,8 @@ export type RunAction =
       label: "Billing dispute" | "Integration issue";
       elapsedMs: number;
     }
-  | { type: "escalate"; elapsedMs: number };
+  | { type: "escalate"; elapsedMs: number }
+  | { type: "markConfigStale"; id: string; orderedIds: string[] };
 
 export const idleRun: Run = {
   phase: "idle",
@@ -61,6 +70,7 @@ export const idleRun: Run = {
   outputs: {},
   elapsed: {},
   streamedText: "",
+  stale: {},
 };
 
 export function orderedRunIds(flow: Flow): string[] {
@@ -82,6 +92,7 @@ export function createRun(flow: Flow): Run {
     outputs: {},
     elapsed: {},
     streamedText: "",
+    stale: {},
   };
 }
 
@@ -201,6 +212,18 @@ export function runReducer(state: Run, action: RunAction): Run {
         totalMs,
         resultText: "Routed to Billing · assigned to the on-call agent",
       };
+    }
+    case "markConfigStale": {
+      const stale = applyConfigStale(
+        state.stale,
+        state.outputs,
+        action.orderedIds,
+        action.id,
+      );
+      if (stale === state.stale) {
+        return state;
+      }
+      return { ...state, stale };
     }
     case "escalate": {
       const elapsed = {

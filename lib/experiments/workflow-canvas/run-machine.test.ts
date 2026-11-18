@@ -98,6 +98,7 @@ describe("run machine", () => {
       outputs: {},
       elapsed: {},
       streamedText: "",
+      stale: {},
     });
 
     const flow = demoFlow();
@@ -133,6 +134,7 @@ describe("run machine", () => {
     }
     assert.deepEqual(started.outputs, {});
     assert.deepEqual(started.elapsed, {});
+    assert.deepEqual(started.stale, {});
   });
 
   test("stop from a paused or finished run returns the idle run", () => {

@@ -21,7 +21,10 @@ import {
   isNodeIncomplete,
   type ConditionNode,
 } from "@/lib/experiments/workflow-canvas/types";
-import type { NodeRunState } from "@/lib/experiments/workflow-canvas/run-machine";
+import type {
+  NodeRunState,
+  StaleReason,
+} from "@/lib/experiments/workflow-canvas/run-machine";
 import {
   color,
   tokenStyle,
@@ -42,6 +45,9 @@ type ConditionNodeCardProps = {
   elapsedMs?: number;
   startedAt?: number | null;
   runDurationMs?: number;
+  staleReason?: StaleReason;
+  onRunAgain?: () => void;
+  runAgainDisabled?: boolean;
   assistantEnabled?: boolean;
   assistantOpen?: boolean;
   assistantMinimized?: boolean;
@@ -66,6 +72,9 @@ export function ConditionNodeCard({
   elapsedMs,
   startedAt = null,
   runDurationMs,
+  staleReason,
+  onRunAgain,
+  runAgainDisabled = false,
   assistantEnabled = false,
   assistantOpen = false,
   assistantMinimized = false,
@@ -75,7 +84,9 @@ export function ConditionNodeCard({
   onAssistantClose,
   onAssistantMinimize,
 }: ConditionNodeCardProps) {
-  const incomplete = isNodeIncomplete(node) && !runState;
+  // A half-built row stays a quiet marker, including after a run whose
+  // result is still on screen. It is hidden only while this step is executing.
+  const incomplete = isNodeIncomplete(node) && runState !== "running";
   const menu = useChipMenu();
   const skipped = runState === "skipped";
   const tint = typeTint.condition;
@@ -229,6 +240,9 @@ export function ConditionNodeCard({
           elapsedMs={elapsedMs}
           ticking={ticking}
           startedAt={startedAt}
+          staleReason={staleReason}
+          onRunAgain={onRunAgain}
+          runAgainDisabled={runAgainDisabled}
         />
 
         {incomplete ? (
