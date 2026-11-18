@@ -185,7 +185,7 @@ export function TemplatesModal({
         </button>
         <div className="flex flex-wrap items-center gap-2.5 px-6 pt-5 sm:px-8">
           <div
-            className="flex h-10 min-w-[200px] flex-1 items-center gap-2.5 rounded-[10px] border px-3"
+            className="flex h-10 min-w-[200px] flex-1 items-center gap-2.5 rounded-[8px] border px-3"
             style={{
               borderColor: searchFocused ? "var(--accent)" : color.border,
               boxShadow: searchFocused
@@ -300,7 +300,7 @@ export function TemplatesModal({
               : `${results.length} templates`}
           </p>
           {results.length === 0 ? (
-            <p className="px-1 text-[13px] leading-snug" style={{ color: color.muted }}>
+            <p className="px-1 text-[13px] leading-[1.4]" style={{ color: color.muted }}>
               No template matches that.
             </p>
           ) : (
@@ -385,7 +385,7 @@ function FilterSelect({
   const [focused, setFocused] = useState(false);
   return (
     <div
-      className="relative flex h-10 items-center gap-2 rounded-[10px] border pr-8 pl-3"
+      className="relative flex h-10 items-center gap-2 rounded-[8px] border pr-8 pl-3"
       style={{
         borderColor: focused ? "var(--accent)" : color.border,
         boxShadow: focused
@@ -510,7 +510,7 @@ function FlowPreview({
               />
             ) : null}
             <span
-              className="flex h-[26px] items-center rounded-[6px] px-2 text-[10.5px] font-semibold tracking-[0.04em] uppercase"
+              className="flex h-[26px] items-center rounded-[6px] px-2 text-[11px] font-semibold tracking-[0.04em] uppercase"
               style={{ background: tint.tint, color: tint.ink }}
             >
               {PREVIEW_LABEL[kind]}

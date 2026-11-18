@@ -101,7 +101,7 @@ export function TriggerPicker({
                 {trigger.title}
               </span>
               <span
-                className="mt-0.5 text-[12px] leading-snug"
+                className="mt-0.5 text-[12px] leading-[1.4]"
                 style={{ color: color.muted }}
               >
                 {trigger.subtitle}

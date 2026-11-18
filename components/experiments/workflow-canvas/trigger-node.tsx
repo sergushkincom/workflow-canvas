@@ -115,7 +115,7 @@ export function TriggerNodeCard({
           >
             <button
               type="button"
-              className="rounded-[6px] px-2 py-1 text-[12.5px] font-medium hover:bg-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+              className="rounded-[6px] px-2 py-1 text-[12px] font-medium hover:bg-field focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
               style={{ color: color.ink, background: color.field }}
               aria-haspopup="dialog"
               aria-expanded={triggerPickerOpen}
