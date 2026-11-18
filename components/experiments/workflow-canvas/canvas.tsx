@@ -378,6 +378,7 @@ export function WorkflowCanvas({
   onOpenTemplates,
   autoFocusTitle = false,
   initialHighlight,
+  onFlowChange,
 }: {
   captureState?: CaptureState;
   initialFlow?: Flow;
@@ -389,6 +390,7 @@ export function WorkflowCanvas({
     summary: string;
     undoFlow: Flow;
   };
+  onFlowChange?: (flow: Flow) => void;
 }) {
   const frozen = Boolean(captureState);
   const [state, dispatch] = useReducer(
@@ -450,6 +452,10 @@ export function WorkflowCanvas({
     }
     document.getElementById("workflow-title")?.focus();
   }, [autoFocusTitle]);
+
+  useEffect(() => {
+    onFlowChange?.(state.flow);
+  }, [onFlowChange, state.flow]);
 
   useEffect(() => {
     if (!captureState) {
