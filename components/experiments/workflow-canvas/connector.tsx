@@ -5,6 +5,7 @@ import { useId } from "react";
 
 import { AddStepMenu } from "./add-step-menu";
 import { cn } from "@/lib/utils";
+import type { EdgeFlow } from "@/lib/experiments/workflow-canvas/edge-flow";
 import {
   accent,
   color,
@@ -18,6 +19,11 @@ type ConnectorProps = {
   dropId?: string;
   insertIndex?: number;
   insertion?: boolean;
+  /**
+   * Test-run read of this connector. `rest` and `solid` keep the existing
+   * stroke colour. `flowing` draws accent dashes toward the step below.
+   */
+  flow?: EdgeFlow;
 };
 
 export function Connector({
@@ -27,6 +33,7 @@ export function Connector({
   dropId,
   insertIndex,
   insertion = false,
+  flow = "rest",
 }: ConnectorProps) {
   const fallbackId = useId();
   const { setNodeRef } = useDroppable({
@@ -43,8 +50,14 @@ export function Connector({
     >
       <span
         aria-hidden
-        className="absolute top-0 left-1/2 h-full w-[1.25px] -translate-x-1/2"
-        style={{ background: color.dashed }}
+        data-edge-flow={flow}
+        className={cn(
+          "absolute top-0 left-1/2 h-full -translate-x-1/2",
+          flow === "flowing" ? "edge-flow w-0.5" : "w-[1.25px]",
+        )}
+        style={
+          flow === "flowing" ? undefined : { background: color.dashed }
+        }
       />
       {insertion ? (
         <span
