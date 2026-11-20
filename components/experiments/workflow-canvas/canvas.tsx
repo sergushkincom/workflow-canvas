@@ -88,6 +88,7 @@ import {
   captureRunSnapshot,
   type CaptureState,
 } from "@/lib/experiments/workflow-canvas/capture-snapshots";
+import { edgeFlowForTarget } from "@/lib/experiments/workflow-canvas/edge-flow";
 import {
   AI_THINK_DELAY_MS,
   RESULT_CARD_DELAY_MS,
@@ -869,6 +870,7 @@ export function WorkflowCanvas({
                     dropId={`insert-${index}`}
                     insertIndex={index}
                     insertion={overDropId === `insert-${index}`}
+                    flow={edgeFlowForTarget(run.nodeStates[node.id])}
                   />
                   {isConditionNode(node) ? (
                   <DndContext
@@ -964,6 +966,7 @@ export function WorkflowCanvas({
                   dropId="insert-before-ai"
                   insertIndex={state.flow.steps.length}
                   insertion={overDropId === "insert-before-ai"}
+                  flow={edgeFlowForTarget(classifyState)}
                 />
                 <AiStepNode
                   state={classifyState}

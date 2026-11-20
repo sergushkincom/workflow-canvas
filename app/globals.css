@@ -208,6 +208,16 @@
   }
 }
 
+/* Dashes travel downward, toward the step the connector leads into. */
+@keyframes edge-flow {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 12px;
+  }
+}
+
 .animate-node-in {
   animation: node-in 150ms ease-out;
 }
@@ -250,6 +260,17 @@
 
 .animate-insertion-in {
   animation: insertion-in 120ms ease-out;
+}
+
+.edge-flow {
+  background-color: transparent;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--accent) 0 6px,
+    transparent 6px 12px
+  );
+  background-size: 100% 12px;
+  animation: edge-flow 0.55s linear infinite;
 }
 
 /* One focus ring: 2px solid accent. Unlayered so it wins over utility shadows. */
@@ -328,6 +349,10 @@
   }
 
   .animate-insertion-in {
+    animation: none;
+  }
+
+  .edge-flow {
     animation: none;
   }
 }
