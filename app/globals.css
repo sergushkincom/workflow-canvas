@@ -248,6 +248,27 @@
   animation-delay: 400ms;
 }
 
+.result-caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  margin-left: 1px;
+  border-radius: 1px;
+  vertical-align: -0.1em;
+  background: currentColor;
+  animation: result-caret 0.9s ease-in-out infinite;
+}
+
+@keyframes result-caret {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .animate-confidence-fill {
   width: 62%;
   background: var(--accent);
@@ -337,6 +358,11 @@
     animation: none;
     animation-delay: 0ms;
     opacity: 1;
+  }
+
+  .result-caret {
+    animation: none;
+    display: none;
   }
 
   .animate-confidence-fill {
