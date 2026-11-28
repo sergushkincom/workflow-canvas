@@ -14,7 +14,17 @@ import type { BuiltWorkflow } from "./build-helper-panel";
 import { BuildSessionProvider } from "./build-session";
 import { FirstRunShell } from "./first-run-shell";
 import { TemplatesModal } from "./templates-modal";
+import { ShareToast } from "./share-toast";
 import { IDLE_NUDGE_MS } from "@/lib/experiments/workflow-canvas/build-helper";
+import {
+  LINK_INVALID,
+  LINK_OPEN_TOO_LONG,
+  decodeCanvasHash,
+  flowFromSnapshot,
+  type CanvasSnapshot,
+  type DecodeResult,
+  type ShareViewport,
+} from "@/lib/experiments/workflow-canvas/canvas-link";
 import type { NamedWorkflow } from "@/lib/experiments/workflow-canvas/credentials";
 import { initialFlowState } from "@/lib/experiments/workflow-canvas/flow-reducer";
 import { getNodeType } from "@/lib/experiments/workflow-canvas/node-types";
@@ -49,12 +59,37 @@ type EditorSession = {
   name: string;
   flow: Flow;
   autoFocusTitle: boolean;
+  viewport?: ShareViewport;
   highlight?: {
     ids: string[];
     summary: string;
     undoFlow: Flow;
   };
 };
+
+function readIncomingShare(captureState: CaptureState | undefined): DecodeResult {
+  if (captureState || typeof window === "undefined") {
+    return { ok: false, reason: "empty" };
+  }
+  try {
+    return decodeCanvasHash(window.location.hash, window.location.href.length);
+  } catch {
+    return { ok: false, reason: "invalid" };
+  }
+}
+
+function editorFromShare(
+  snapshot: CanvasSnapshot,
+  key = "shared",
+): EditorSession {
+  return {
+    key,
+    name: snapshot.name,
+    flow: flowFromSnapshot(snapshot),
+    autoFocusTitle: false,
+    viewport: snapshot.viewport,
+  };
+}
 
 function sessionFromProps(
   captureState: CaptureState | undefined,
@@ -108,18 +143,87 @@ export function WorkflowApp({
   flowId?: string | null;
   nudgeDelayMs?: number;
 }) {
-  const initialEditor = sessionFromProps(captureState, flowId);
-  const [editor, setEditor] = useState<EditorSession | null>(initialEditor);
-  const [showEditor, setShowEditor] = useState(initialEditor != null);
+  const [incoming] = useState(() => readIncomingShare(captureState));
+  const [editor, setEditor] = useState<EditorSession | null>(() =>
+    incoming.ok
+      ? editorFromShare(incoming.snapshot)
+      : sessionFromProps(captureState, flowId),
+  );
+  const [linkNotice, setLinkNotice] = useState<string | null>(() => {
+    if (incoming.ok || incoming.reason === "empty") {
+      return null;
+    }
+    return incoming.reason === "too-long" ? LINK_OPEN_TOO_LONG : LINK_INVALID;
+  });
+  const [showEditor, setShowEditor] = useState(editor != null);
   const [frozen, setFrozen] = useState(Boolean(captureState));
-  const [modalOpen, setModalOpen] = useState(initialEditor == null);
+  const [modalOpen, setModalOpen] = useState(editor == null);
   const [section, setSection] = useState<ShellSection>(
-    initialEditor ? "workflows" : "home",
+    editor ? "workflows" : "home",
   );
   const narrow = useNarrowShell();
   const nextKey = useRef(1);
   const addStepRef = useRef<HTMLButtonElement>(null);
   const pendingFocus = useRef<"shell" | "editor" | null>(null);
+  useEffect(() => {
+    if (incoming.ok || incoming.reason === "empty") {
+      return;
+    }
+    try {
+      const url = new URL(window.location.href);
+      url.hash = "";
+      window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+    } catch {
+      // A bad address is already ignored. Leave the bar alone.
+    }
+  }, [incoming]);
+
+  useEffect(() => {
+    function applyHash() {
+      let result: DecodeResult;
+      try {
+        result = decodeCanvasHash(
+          window.location.hash,
+          window.location.href.length,
+        );
+      } catch {
+        result = { ok: false, reason: "invalid" };
+      }
+      if (!result.ok) {
+        if (result.reason === "empty") {
+          return;
+        }
+        setEditor(null);
+        setShowEditor(false);
+        setSection("home");
+        setModalOpen(true);
+        setLinkNotice(
+          result.reason === "too-long" ? LINK_OPEN_TOO_LONG : LINK_INVALID,
+        );
+        try {
+          const url = new URL(window.location.href);
+          url.hash = "";
+          window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+        } catch {
+          // The toast still explains the bad link.
+        }
+        return;
+      }
+      if (result.ok) {
+        const key = `shared-${nextKey.current}`;
+        nextKey.current += 1;
+        setFrozen(false);
+        setEditor(editorFromShare(result.snapshot, key));
+        setShowEditor(true);
+        setSection("workflows");
+        setModalOpen(false);
+        setLinkNotice(null);
+      }
+    }
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, []);
+
   const collapsed = showEditor || narrow;
   const sidebarWidth = collapsed ? SIDEBAR_RAIL_PX : SIDEBAR_WIDTH_PX;
 
@@ -220,6 +324,7 @@ export function WorkflowApp({
             title={editor.name}
             autoFocusTitle={editor.autoFocusTitle}
             initialHighlight={editor.highlight}
+            initialViewport={editor.viewport}
             onFlowChange={rememberFlow}
           />
         ) : (
@@ -261,6 +366,13 @@ export function WorkflowApp({
           }}
         />
       )}
+      {linkNotice ? (
+        <ShareToast
+          message={linkNotice}
+          align="start"
+          onDone={() => setLinkNotice(null)}
+        />
+      ) : null}
     </div>
     </BuildSessionProvider>
   );
