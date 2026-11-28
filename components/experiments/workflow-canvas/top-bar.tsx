@@ -32,6 +32,7 @@ type TopBarProps = {
   /** A finished run whose output no longer matches the current steps. */
   resultsStale?: boolean;
   onOpenTemplates?: () => void;
+  onCopyLink?: () => void;
   helperOpen?: boolean;
   onToggleHelper?: () => void;
 };
@@ -46,6 +47,7 @@ export function TopBar({
   onStop,
   resultsStale = false,
   onOpenTemplates,
+  onCopyLink,
   helperOpen = false,
   onToggleHelper,
 }: TopBarProps) {
@@ -128,6 +130,18 @@ export function TopBar({
             onClick={onOpenTemplates}
           >
             Templates
+          </Button>
+        ) : null}
+        {onCopyLink ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="h-7 shrink-0 rounded-[6px] px-2.5 text-[12px] font-medium shadow-none"
+            style={{ background: color.field, color: color.ink }}
+            onClick={onCopyLink}
+          >
+            Copy link
           </Button>
         ) : null}
         {doneStale ? (

@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import {
   useEffect,
+  useLayoutEffect,
   useReducer,
   useRef,
   useState,
@@ -43,6 +44,8 @@ import { AiStepNode } from "./run/ai-step-node";
 import type { DecisionLabel } from "./run/decision-panel";
 import { ResultCard } from "./run/result-card";
 import { SampleTicketCard } from "./run/sample-ticket-card";
+import { copyCanvasLink } from "./copy-canvas-link";
+import { ShareToast } from "./share-toast";
 import { TopBar } from "./top-bar";
 import { TriggerPicker } from "./trigger-picker";
 import { TriggerNodeCard } from "./trigger-node";
@@ -94,6 +97,10 @@ import {
   RESULT_CARD_DELAY_MS,
   STREAM_CHAR_MS,
 } from "@/lib/experiments/workflow-canvas/run-timings";
+import {
+  snapshotFromFlow,
+  type ShareViewport,
+} from "@/lib/experiments/workflow-canvas/canvas-link";
 import type { Flow, FlowAction } from "@/lib/experiments/workflow-canvas/types";
 import {
   incompleteStepCount,
@@ -393,6 +400,7 @@ export function WorkflowCanvas({
   onOpenTemplates,
   autoFocusTitle = false,
   initialHighlight,
+  initialViewport,
   onFlowChange,
 }: {
   captureState?: CaptureState;
@@ -405,6 +413,7 @@ export function WorkflowCanvas({
     summary: string;
     undoFlow: Flow;
   };
+  initialViewport?: ShareViewport;
   onFlowChange?: (flow: Flow) => void;
 }) {
   const frozen = Boolean(captureState);
@@ -443,6 +452,10 @@ export function WorkflowCanvas({
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
   const [notice, setNotice] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ id: number; message: string } | null>(
+    null,
+  );
+  const canvasRef = useRef<HTMLDivElement>(null);
   const [dragTypeId, setDragTypeId] = useState<string | null>(null);
   const [overDropId, setOverDropId] = useState<string | null>(null);
   const recentNodes = useRecentNodeTypes();
@@ -472,6 +485,15 @@ export function WorkflowCanvas({
   useEffect(() => {
     onFlowChange?.(state.flow);
   }, [onFlowChange, state.flow]);
+
+  useLayoutEffect(() => {
+    const node = canvasRef.current;
+    if (!node || !initialViewport) {
+      return;
+    }
+    node.scrollLeft = initialViewport.x;
+    node.scrollTop = initialViewport.y;
+  }, [initialViewport]);
 
   useEffect(() => {
     if (!captureState) {
@@ -588,6 +610,16 @@ export function WorkflowCanvas({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [state.selectedId, exitingId, editingLocked, run.phase, assistantId]);
+
+  async function onCopyLink() {
+    const scroller = canvasRef.current;
+    const snapshot = snapshotFromFlow(title, state.flow, {
+      x: scroller?.scrollLeft ?? 0,
+      y: scroller?.scrollTop ?? 0,
+    });
+    const message = await copyCanvasLink(window.location.href, snapshot);
+    setToast({ id: Date.now(), message });
+  }
 
   function closeAssistant() {
     setAssistantId(null);
@@ -775,6 +807,7 @@ export function WorkflowCanvas({
         <TopBar
           title={title}
           onOpenTemplates={onOpenTemplates}
+          onCopyLink={frozen ? undefined : onCopyLink}
           helperOpen={helperOpen}
           onToggleHelper={
             frozen
@@ -795,6 +828,7 @@ export function WorkflowCanvas({
         />
         <div className="relative min-h-0 min-w-0 flex-1">
         <div
+          ref={canvasRef}
           data-workflow-canvas=""
           className="canvas-dots absolute inset-0 overflow-x-auto overflow-y-auto"
           onClick={(event) => {
@@ -1083,6 +1117,13 @@ export function WorkflowCanvas({
         {dragPreview ? <PaletteCardPreview nodeType={dragPreview} /> : null}
       </DragOverlay>
       </DndContext>
+      {toast ? (
+        <ShareToast
+          key={toast.id}
+          message={toast.message}
+          onDone={() => setToast(null)}
+        />
+      ) : null}
     </TooltipProvider>
   );
 }
